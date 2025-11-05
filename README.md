@@ -279,7 +279,7 @@
 <body>
 
     <h1>✨ Sistema de Geração de Horários Otimizado</h1>
-    <p class="regra-status">Regras Ativas: **Aulas Geminadas Opcionais**, Anti-Janela, Turnos M/T, Persistência LocalStorage, Edição de Dados, **Máx. 40 Aulas/Mês** e **Máx. 9 Aulas/Dia (Ambos os Turnos)**. **NÃO HÁ LIMITE SEMANAL ESTRICTO.**</p>
+    <p class="regra-status">Regras Ativas: **Aulas Geminadas Opcionais (Singular/Geminada/Combinada)**, Anti-Janela, Turnos M/T (Tarde inicia 13:40), **Regra de Transição Manhã-Tarde (Professor com última aula da manhã só começa na 2ª da tarde)**, Persistência LocalStorage, Edição de Dados, **Máx. 40 Aulas/Mês** e **Máx. 9 Aulas/Dia (Ambos os Turnos)**. **NÃO HÁ LIMITE SEMANAL ESTRICTO.**</p>
     
     <div class="container">
         <div class="painel-cadastro">
@@ -309,8 +309,9 @@
                         <input type="number" id="aulasSemanaTurma" min="1" max="10" placeholder="Aulas/Semana" style="width: 30%;">
                         
                         <select id="blocoDisciplina" style="width: 30%;">
-                            <option value="S">Singular (Aulas Separadas)</option>
+                            <option value="S">Singular (Separadas)</option>
                             <option value="G">Geminada (Blocos de 2)</option>
+                            <option value="C">Combinada (Blocos + Separadas)</option> 
                         </select>
                     </div>
                     <button onclick="adicionarDisciplina()">➕ Adicionar Disciplina à Turma</button>
@@ -399,24 +400,27 @@
         // --- CONSTANTES E VARIÁVEIS GLOBAIS ---
         const DIAS_SEMANA = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira'];
         const DIAS_CURTO = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
+        // NOVO HORÁRIO DA TARDE INICIA ÀS 13:40
         const PERIODOS_HORA = [ 
              '07:00-07:50', '07:50-08:40', '08:40-09:30', '09:30-10:00 (I-M)', 
              '10:00-10:50', '10:50-11:40', '11:40-12:30', '12:30-13:20', 
-             '14:00-14:50', '14:50-15:40', '15:40-16:30', '16:30-17:00 (I-T)', 
-             '17:00-17:50', '17:50-18:40', '18:40-19:30', '19:30-20:20'  
+             // NOVO INÍCIO DA TARDE
+             '13:40-14:30', '14:30-15:20', '15:20-16:10', '16:10-16:40 (I-T)', 
+             '16:40-17:30', '17:30-18:20', '18:20-19:10', '19:10-20:00'  
         ];
         const TURNO_MAP = {
             'M': { nome: 'Manhã', slots: [0, 1, 2, 4, 5, 6, 7], slotsGeminadas: [[0,1], [1,2], [4,5], [5,6], [6,7]] }, 
             'T': { nome: 'Tarde', slots: [8, 9, 10, 12, 13, 14, 15], slotsGeminadas: [[8,9], [9,10], [12,13], [13,14], [14,15]] }, 
         };
         const INTERVALO_MAP = { M: 3, T: 11 }; 
+        const LAST_MORNING_SLOT = 7; // Slot 7: 12:30-13:20
+        const FIRST_AFTERNOON_SLOT = 8; // Slot 8: 13:40-14:30
         
         // ***************************************************************
-        // *** REGRAS DE CARGA HORÁRIA (Limite Semanal Estricto Removido)
+        // *** REGRAS DE CARGA HORÁRIA 
         // ***************************************************************
         const LIMITE_AULAS_MES_PROFESSOR = 40; 
         const MAX_AULAS_DIA_PROFESSOR = 9; 
-        // Aumentado para um valor alto para desativar o limite semanal estrito na alocação.
         const LIMITE_AULAS_SEMANA_PROFESSOR = 500; 
         // ***************************************************************
 
@@ -577,8 +581,11 @@
             const lista = document.getElementById('listaTurmasCadastradas');
             lista.innerHTML = turmas.map((t, index) => {
                 const disciplinas = t.disciplinas.map(d => {
-                    const bloco = d.bloco === 'G' ? 'Geminada' : 'Singular';
-                    return `${d.nome} (${d.aulas}/sem - ${bloco})`;
+                    let blocoLabel = '';
+                    if (d.bloco === 'G') blocoLabel = 'Geminada (Blocos)';
+                    else if (d.bloco === 'S') blocoLabel = 'Singular (Separadas)';
+                    else if (d.bloco === 'C') blocoLabel = 'Combinada (Blocos + Separadas)';
+                    return `${d.nome} (${d.aulas}/sem - ${blocoLabel})`;
                 }).join(', ');
                 return `<p>
                     <span><strong>${t.nome}</strong> (${TURNO_MAP[t.turno].nome}): ${disciplinas}</span>
@@ -695,6 +702,78 @@
             }
         }
         
+        function adicionarDisciplina() {
+            const disc = document.getElementById('disciplinaTurma').value.trim();
+            const aulas = parseInt(document.getElementById('aulasSemanaTurma').value);
+            const bloco = document.getElementById('blocoDisciplina').value;
+
+            if (!disc || isNaN(aulas) || aulas <= 0) {
+                alert("Preencha a disciplina e o número de aulas válidas.");
+                return;
+            }
+            
+            // Regra: Geminada (G) e Combinada (C) só são totalmente eficazes se o número de aulas for >= 2
+            if ((bloco === 'G' || bloco === 'C') && aulas < GEMINADA_SIZE) {
+                 alert(`AVISO: Para a opção ${bloco === 'G' ? 'Geminada' : 'Combinada'}, o número de aulas deve ser de pelo menos ${GEMINADA_SIZE}.`);
+            }
+            
+            disciplinasTemp.push({ nome: disc, aulas: aulas, bloco: bloco });
+            document.getElementById('disciplinaTurma').value = '';
+            document.getElementById('aulasSemanaTurma').value = '';
+            document.getElementById('blocoDisciplina').value = 'S';
+            atualizarListaDisciplinas();
+        }
+
+        function atualizarListaDisciplinas() {
+            const listaDiv = document.getElementById('listaDisciplinas');
+            if (disciplinasTemp.length === 0) {
+                listaDiv.innerHTML = '';
+                return;
+            }
+            listaDiv.innerHTML = `<h4>Disciplinas para Turma em Cadastro:</h4><ul>`;
+            disciplinasTemp.forEach((d, index) => {
+                let blocoLabel = '';
+                if (d.bloco === 'G') blocoLabel = 'Geminada (Blocos)';
+                else if (d.bloco === 'S') blocoLabel = 'Singular (Separadas)';
+                else if (d.bloco === 'C') blocoLabel = 'Combinada (Blocos + Separadas)';
+                
+                listaDiv.innerHTML += `<li>${d.nome}: ${d.aulas} aulas/semana (${blocoLabel})
+                    <button class="btn-acao danger" onclick="disciplinasTemp.splice(${index}, 1); atualizarListaDisciplinas();">🗑️</button>
+                </li>`;
+            });
+            listaDiv.innerHTML += '</ul>';
+        }
+
+        function adicionarTurma() {
+             if (document.getElementById('botoesTurma').innerHTML.includes('Salvar Edição')) {
+                alert("Você está no modo de edição. Clique em 'Salvar Edição' ou 'Cancelar'.");
+                return;
+            }
+
+            const nomeTurma = document.getElementById('nomeTurma').value.trim();
+            const turnoTurma = document.getElementById('turnoTurma').value;
+            
+            if (!nomeTurma || disciplinasTemp.length === 0) {
+                alert("Preencha o nome da turma e adicione pelo menos uma disciplina.");
+                return;
+            }
+            
+            if (turmas.some(t => t.nome === nomeTurma)) {
+                 alert(`A turma com nome "${nomeTurma}" já existe. Por favor, use um nome único.`);
+                 return;
+            }
+
+            turmas.push({ nome: nomeTurma, turno: turnoTurma, disciplinas: [...disciplinasTemp] });
+            
+            document.getElementById('nomeTurma').value = '';
+            disciplinasTemp = [];
+            document.getElementById('listaDisciplinas').innerHTML = '';
+
+            gerarAulasPendentes();
+            atualizarListaTurmas();
+            salvarDados(); 
+        }
+
         function atualizarListaProfessores() { 
             professores.forEach(p => getCorProfessor(p.nome));
             injetarEstilosCores();
@@ -737,7 +816,11 @@
             
             turmas.forEach(turma => {
                 turma.disciplinas.forEach(disciplina => {
-                    const blocoLabel = disciplina.bloco === 'G' ? 'Geminada' : 'Singular';
+                    let blocoLabel = '';
+                    if (disciplina.bloco === 'G') blocoLabel = 'Geminada';
+                    else if (disciplina.bloco === 'S') blocoLabel = 'Singular';
+                    else if (disciplina.bloco === 'C') blocoLabel = 'Combinada';
+                    
                     const chave = `${turma.nome}-${disciplina.nome}`;
                     const isChecked = vinculosSet.has(chave);
                     
@@ -874,78 +957,6 @@
             }
         }
         
-        function adicionarDisciplina() {
-            const disc = document.getElementById('disciplinaTurma').value.trim();
-            const aulas = parseInt(document.getElementById('aulasSemanaTurma').value);
-            const bloco = document.getElementById('blocoDisciplina').value;
-
-            if (!disc || isNaN(aulas) || aulas <= 0) {
-                alert("Preencha a disciplina e o número de aulas válidas.");
-                return;
-            }
-            
-            // Regra: Geminada (G) só é possível se o número de aulas for par (ou 1, que é o caso Singular)
-            // Para simplificar, permitiremos G se for > 1. O algoritmo tentará formar blocos de 2
-            if (bloco === 'G' && aulas % GEMINADA_SIZE !== 0) {
-                 // Permitir bloco de 2 se for maior que 2, mas for ímpar (ex: 3 aulas). O algoritmo fará 1 bloco + 1 singular.
-                 if (aulas > GEMINADA_SIZE && aulas % GEMINADA_SIZE !== 0) {
-                     alert(`AVISO: A disciplina ${disc} tem ${aulas} aulas e foi marcada como Geminada (Blocos de 2). Ela terá ${Math.floor(aulas / GEMINADA_SIZE)} blocos e ${aulas % GEMINADA_SIZE} aulas singulares.`);
-                 }
-            }
-            
-            disciplinasTemp.push({ nome: disc, aulas: aulas, bloco: bloco });
-            document.getElementById('disciplinaTurma').value = '';
-            document.getElementById('aulasSemanaTurma').value = '';
-            document.getElementById('blocoDisciplina').value = 'S';
-            atualizarListaDisciplinas();
-        }
-
-        function atualizarListaDisciplinas() {
-            const listaDiv = document.getElementById('listaDisciplinas');
-            if (disciplinasTemp.length === 0) {
-                listaDiv.innerHTML = '';
-                return;
-            }
-            listaDiv.innerHTML = `<h4>Disciplinas para Turma em Cadastro:</h4><ul>`;
-            disciplinasTemp.forEach((d, index) => {
-                const blocoLabel = d.bloco === 'G' ? 'Geminada' : 'Singular';
-                listaDiv.innerHTML += `<li>${d.nome}: ${d.aulas} aulas/semana (${blocoLabel})
-                    <button class="btn-acao danger" onclick="disciplinasTemp.splice(${index}, 1); atualizarListaDisciplinas();">🗑️</button>
-                </li>`;
-            });
-            listaDiv.innerHTML += '</ul>';
-        }
-
-        function adicionarTurma() {
-             if (document.getElementById('botoesTurma').innerHTML.includes('Salvar Edição')) {
-                alert("Você está no modo de edição. Clique em 'Salvar Edição' ou 'Cancelar'.");
-                return;
-            }
-
-            const nomeTurma = document.getElementById('nomeTurma').value.trim();
-            const turnoTurma = document.getElementById('turnoTurma').value;
-            
-            if (!nomeTurma || disciplinasTemp.length === 0) {
-                alert("Preencha o nome da turma e adicione pelo menos uma disciplina.");
-                return;
-            }
-            
-            if (turmas.some(t => t.nome === nomeTurma)) {
-                 alert(`A turma com nome "${nomeTurma}" já existe. Por favor, use um nome único.`);
-                 return;
-            }
-
-            turmas.push({ nome: nomeTurma, turno: turnoTurma, disciplinas: [...disciplinasTemp] });
-            
-            document.getElementById('nomeTurma').value = '';
-            disciplinasTemp = [];
-            document.getElementById('listaDisciplinas').innerHTML = '';
-
-            gerarAulasPendentes();
-            atualizarListaTurmas();
-            salvarDados(); 
-        }
-
         function gerarInterfaceRestricoes() { 
             // Função de geração de interface de restrições (mantida a mesma)
             const container = document.querySelector('.restricoes-avancadas');
@@ -1057,9 +1068,22 @@
                     let aulasRestantes = disc.aulas;
                     const chaveAula = `${turma.nome}-${disc.nome}`;
                     
-                    if (disc.bloco === 'G') {
-                        // 1. Geminadas (Blocos de 2)
-                        let numBlocos = Math.floor(aulasRestantes / GEMINADA_SIZE);
+                    if (disc.bloco === 'G' || disc.bloco === 'C') {
+                        // Cálculo de aulas para Geminada (G) ou Combinada (C)
+                        let aulasParaBlocos;
+                        
+                        if (disc.bloco === 'G') {
+                            // Geminada: Tenta o máximo possível de blocos
+                            aulasParaBlocos = Math.floor(aulasRestantes / GEMINADA_SIZE) * GEMINADA_SIZE;
+                        } else { 
+                            // Combinada: Divide a carga (aprox. 50% para blocos, 50% para singulares)
+                            // Usamos a metade da demanda total, arredondada para baixo para garantir paridade
+                            aulasParaBlocos = Math.floor((aulasRestantes / 2) / GEMINADA_SIZE) * GEMINADA_SIZE;
+                        }
+
+                        let numBlocos = Math.floor(aulasParaBlocos / GEMINADA_SIZE);
+                        
+                        // 1. Gera os blocos
                         for (let i = 0; i < numBlocos; i++) {
                             aulasPendentes.push({ 
                                 id: generateUniqueId(),
@@ -1073,7 +1097,7 @@
                         aulasRestantes -= numBlocos * GEMINADA_SIZE;
                     } 
                     
-                    // 2. Singulares (Restantes e/ou as aulas de disciplina Singular)
+                    // 2. Gera as aulas Singulares (o que restou ou a demanda total de Singular 'S')
                     for (let i = 0; i < aulasRestantes; i++) {
                         aulasPendentes.push({ 
                             id: generateUniqueId(),
@@ -1237,7 +1261,7 @@
                             profsCompativeis.forEach(profCandidato => {
                                 // Checagens de Limites e Restrições
                                 let cargaSemanalAtual = calcularCargaSemanal(grade, profCandidato.nome);
-                                // REGRA ALTERADA: Checa o limite MENSAL (40)
+                                // REGRA: Checa o limite MENSAL (40)
                                 if (cargaSemanalAtual + 1 > LIMITE_AULAS_MES_PROFESSOR) return; 
 
                                 let aulasJaAlocadasDia = calcularAulasDia(grade, dIndex, profCandidato.nome);
@@ -1246,6 +1270,15 @@
                                 const restricoesDia = profCandidato.restricoes.indisponivel[diaCurto] || [];
                                 if (restricoesDia.includes(pIndex)) return;
                                 
+                                // REGRA CORRIGIDA: Professor da tarde só pode iniciar na 2ª aula (slot 9) se tiver a última aula da manhã (slot 7)
+                                if (aula.turno === 'T' && pIndex === FIRST_AFTERNOON_SLOT) {
+                                    const isLastMorningAllocated = grade[dIndex][LAST_MORNING_SLOT] && grade[dIndex][LAST_MORNING_SLOT].professor === profCandidato.nome;
+                                    
+                                    if (isLastMorningAllocated) {
+                                        return; // BLOQUEIA: Professor com aula na slot 7 (fim da manhã) não pode ter aula na slot 8 (início da tarde)
+                                    }
+                                }
+
                                 // Checa Janela com a nova alocação
                                 let isJanela = checarJanela(grade, dIndex, pIndex, profCandidato.nome, turnoSlots, 1);
                                 
@@ -1264,7 +1297,7 @@
                             profsCompativeis.forEach(profCandidato => {
                                 // Checagens de Limites e Restrições
                                 let cargaSemanalAtual = calcularCargaSemanal(grade, profCandidato.nome);
-                                // REGRA ALTERADA: Checa o limite MENSAL (40)
+                                // REGRA: Checa o limite MENSAL (40)
                                 if (cargaSemanalAtual + GEMINADA_SIZE > LIMITE_AULAS_MES_PROFESSOR) return; 
                                 
                                 let aulasJaAlocadasDia = calcularAulasDia(grade, dIndex, profCandidato.nome);
@@ -1273,6 +1306,15 @@
                                 const restricoesDia = profCandidato.restricoes.indisponivel[diaCurto] || [];
                                 if (restricoesDia.includes(pIndex1) || restricoesDia.includes(pIndex2)) return;
                                 
+                                // REGRA CORRIGIDA: Professor da tarde só pode iniciar na 2ª aula (slot 9) se tiver a última aula da manhã (slot 7)
+                                if (aula.turno === 'T' && pIndex1 === FIRST_AFTERNOON_SLOT) {
+                                     const isLastMorningAllocated = grade[dIndex][LAST_MORNING_SLOT] && grade[dIndex][LAST_MORNING_SLOT].professor === profCandidato.nome;
+                                    
+                                    if (isLastMorningAllocated) {
+                                        return; // BLOQUEIA: Professor com aula na slot 7 (fim da manhã) não pode ter aula na slot 8 (início da tarde)
+                                    }
+                                }
+
                                 // Blocos de 2 não criam janelas (regra anti-janela ignorada, pois o bloco a evita)
                                 posicoesViáveis.push({ dIndex, pIndex1, pIndex2, professor: profCandidato.nome, isJanela: false, tamanho: GEMINADA_SIZE });
                             });

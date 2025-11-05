@@ -2,9 +2,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Horários Otimizado (Sem Limite Semanal Estrito)</title>
+    <title>Gerador de Horários Otimizado (Animado e Colorido)</title>
     <style>
-        /* ESTILOS GERAIS */
+        /* ESTILOS GERAIS E ANIMAÇÃO DE INTERFACE */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f4f7f6; color: #333; }
         
         /* FLEXBOX: Layout lado a lado */
@@ -17,7 +17,7 @@
         
         h1 { color: #1a5276; }
         h2 { color: #1a5276; border-bottom: 2px solid #3498db; padding-bottom: 8px; margin-top: 25px; }
-        p.regra-status { font-weight: bold; color: #34495e; margin-top: 5px;}
+        p.regra-status { font-weight: bold; color: #34495e; margin-top: 5px; transition: color 0.3s;} /* Transição suave */
 
         /* --- BOTÕES E ANIMAÇÕES --- */
         button { 
@@ -27,12 +27,13 @@
             padding: 10px 15px; 
             border-radius: 4px; 
             cursor: pointer; 
-            transition: background-color 0.2s, transform 0.1s; 
+            transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s; /* Transição aprimorada */
             margin-top: 10px; 
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-weight: 500;
         }
-        button:hover { background-color: #27ae60; transform: translateY(-1px); }
-        button:active { transform: translateY(0); }
+        button:hover { background-color: #27ae60; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); }
+        button:active { transform: translateY(0); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
         button.danger { background-color: #e74c3c; margin-left: 10px;}
         button.danger:hover { background-color: #c0392b; }
         
@@ -54,11 +55,11 @@
             border: 1px solid #bdc3c7;
             border-radius: 3px;
             font-size: 0.8em;
-            transition: all 0.2s;
+            transition: all 0.3s; /* Transição aprimorada */
             margin-top: 0;
             box-shadow: none;
         }
-        .btn-acao:hover { background-color: #ecf0f1; color: #2c3e50; transform: none; }
+        .btn-acao:hover { background-color: #ecf0f1; color: #2c3e50; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
         .btn-edit { 
             background-color: #3498db; 
             color: white; 
@@ -74,7 +75,7 @@
             background-color: #fff; 
             padding: 20px; 
             border-radius: 8px; 
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15); /* Sombra mais destacada */
             width: 450px; 
             flex-shrink: 0;
             max-height: 90vh; 
@@ -96,11 +97,11 @@
             border: 1px solid #ccc; 
             border-radius: 4px; 
             box-sizing: border-box; 
-            transition: border-color 0.2s;
+            transition: border-color 0.3s, box-shadow 0.3s; /* Transição aprimorada */
         }
         input[type="text"]:focus, input[type="number"]:focus, select:focus {
             border-color: #3498db;
-            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+            box-shadow: 0 0 8px rgba(52, 152, 219, 0.4);
             outline: none;
         }
         .input-group { display: flex; gap: 10px; margin-bottom: 5px;}
@@ -122,41 +123,7 @@
             border: 1px solid #eee;
             border-radius: 3px;
         }
-        .restricoes-avancadas .slots-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-top: 5px;
-        }
-        .restricoes-avancadas .slots-grid label {
-            font-weight: normal;
-            font-size: 0.8em;
-            margin-right: 5px;
-        }
         
-        /* Seleção de Turmas/Disciplinas */
-        .turmas-professor-container {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-top: 10px;
-            background-color: #f9f9f9;
-            border-radius: 4px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .turmas-professor-container label {
-            display: flex;
-            align-items: center;
-            font-weight: normal;
-            font-size: 0.9em;
-            margin-bottom: 5px;
-        }
-        .turmas-professor-container label input {
-            width: auto;
-            margin-right: 5px;
-        }
-
-
         /* LISTA DE DADOS CADASTRADOS (EDITÁVEL/EXCLUÍVEL) */
         .dados-cadastrados { 
             max-height: 200px; 
@@ -175,19 +142,20 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: background-color 0.1s;
+            transition: background-color 0.2s, padding-left 0.2s; /* Transição aprimorada */
         }
         .dados-cadastrados p:hover {
             background-color: #f0f0f0;
             padding-left: 5px;
         }
         .dados-cadastrados span { flex-grow: 1; }
-        .lista-professores strong { display: inline-block; padding: 2px 5px; border-radius: 3px; }
+        .lista-professores strong { display: inline-block; padding: 2px 5px; border-radius: 3px; transition: box-shadow 0.2s; }
+        .lista-professores strong:hover { box-shadow: 0 0 5px rgba(0,0,0,0.2); }
 
         /* Estilo para FOCAR o formulário de edição */
         .edit-active {
             border: 3px solid #3498db !important;
-            box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.7); /* Sombra mais vibrante */
             padding: 18px; 
             margin-top: -2px; 
             margin-left: -2px;
@@ -195,21 +163,36 @@
         
         /* Estilos da Tabela */
         .tabela-wrapper { flex-grow: 1; overflow-x: auto; min-width: 600px; }
-        .horario-tabela { width: 100%; min-width: 950px; border-collapse: collapse; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); background-color: #ffffff; }
+        .horario-tabela { 
+            width: 100%; 
+            min-width: 950px; 
+            border-collapse: collapse; 
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); 
+            background-color: #ffffff; 
+        }
         .horario-tabela th { background-color: #1a5276; color: white; padding: 12px 8px; border: 1px solid #bdc3c7; }
-        .horario-tabela td { padding: 10px 8px; border: 1px solid #ecf0f1; text-align: center; min-width: 100px; font-size: 0.9em; height: 50px; transition: background-color 0.3s; }
+        .horario-tabela td { 
+            padding: 10px 8px; 
+            border: 1px solid #ecf0f1; 
+            text-align: center; 
+            min-width: 100px; 
+            font-size: 0.9em; 
+            height: 50px; 
+            transition: background-color 0.5s; /* Mantém transição para a alocação */
+        }
         .coluna-horario { background-color: #95a5a6; color: white; font-weight: bold; width: 10%; }
-        .intervalo { background-color: #e74c3c; color: white; font-weight: bold; font-style: italic; padding: 10px; }
+        .intervalo { background-color: #e74c3c; color: white; font-weight: bold; font-style: italic; padding: 10px; transition: background-color 0.3s; }
+        .intervalo:hover { background-color: #c0392b; }
         
         .aula-alocada { 
             line-height: 1.2; 
             color: #333; 
             cursor: help; 
-            animation: fadeIn 0.5s ease-out; /* Animação para nova alocação */
+            animation: fadeIn 0.8s ease-out; /* Animação mais suave */
         }
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .professor-alocado { font-weight: bold; display: block; margin-bottom: 3px; }
@@ -218,7 +201,7 @@
         .aula-geminada { border-bottom: none !important; }
 
         /* Mensagem de Erro/Sucesso */
-        #log-status { margin-top: 15px; padding: 10px; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; }
+        #log-status { margin-top: 15px; padding: 12px; border-radius: 6px; font-weight: bold; transition: all 0.5s; }
         .sucesso { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .erro { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .aviso { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
@@ -229,6 +212,7 @@
                 margin: 0; 
                 padding: 0;
                 background-color: white;
+                font-size: 11pt; /* Aumenta um pouco a fonte */
             }
             .container { flex-wrap: wrap; }
             .painel-cadastro, .regra-status, button, #log-status, h1 {
@@ -243,35 +227,58 @@
                 box-shadow: none; 
                 min-width: 100%;
                 font-size: 10pt;
+                page-break-inside: avoid; /* Tenta evitar quebrar a tabela */
             }
-            .horario-tabela td, .horario-tabela th {
+            .horario-tabela th { 
+                background-color: #34495e !important; /* Cor mais escura para títulos */
+                color: white !important;
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact;
+                page-break-before: auto;
+            }
+            .horario-tabela td {
                 padding: 5px;
                 border: 1px solid #aaa;
+                height: 40px;
+                vertical-align: middle;
             }
-            .coluna-horario, .cabecalho-turno, .horario-tabela th {
-                background-color: #eee !important;
+            .coluna-horario { 
+                background-color: #bdc3c7 !important; 
+                color: #333 !important;
                 -webkit-print-color-adjust: exact; 
-                color-adjust: exact;
+                print-color-adjust: exact;
             }
             .intervalo {
-                background-color: #f0f0f0 !important;
+                background-color: #e6b3b3 !important; /* Cor pastel para intervalo */
                 -webkit-print-color-adjust: exact; 
-                color-adjust: exact;
+                print-color-adjust: exact;
                 color: #333 !important;
             }
-            .aula-alocada {
-                border-left: none !important; /* Remove barra de cor */
+            
+            /* FORÇA A IMPRESSÃO DAS CORES DE FUNDO DAS AULAS */
+            .aula-alocada { 
+                color: #000 !important; /* Força texto preto sobre as cores */
+                border-left: 5px solid black !important; /* Borda preta forte */
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important;
             }
-            .aula-alocada:not(.prof-x) { /* Mantém cores de fundo para impressão */
-                -webkit-print-color-adjust: exact; 
-                color-adjust: exact;
+            
+            .cabecalho-turno {
+                background-color: #1a5276 !important;
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important;
+                color: white !important;
+                border: 1px solid #1a5276 !important;
+            }
+            .separador-turno {
+                display: none;
             }
         }
     </style>
 </head>
 <body>
 
-    <h1>Sistema de Geração de Horários Otimizado</h1>
+    <h1>✨ Sistema de Geração de Horários Otimizado</h1>
     <p class="regra-status">Regras Ativas: **Aulas Geminadas Opcionais**, Anti-Janela, Turnos M/T, Persistência LocalStorage, Edição de Dados, **Máx. 40 Aulas/Mês** e **Máx. 9 Aulas/Dia (Ambos os Turnos)**. **NÃO HÁ LIMITE SEMANAL ESTRICTO.**</p>
     
     <div class="container">
@@ -279,7 +286,7 @@
             <h2>⚙️ Cadastro/Edição de Dados</h2>
 
             <div id="formCadastroTurmas">
-                <h3>Turmas e Demandas</h3>
+                <h3>📚 Turmas e Demandas</h3>
                 <div class="cadastro-item" id="cadastroTurmaContainer">
                     <div class="input-group">
                         <div>
@@ -306,24 +313,24 @@
                             <option value="G">Geminada (Blocos de 2)</option>
                         </select>
                     </div>
-                    <button onclick="adicionarDisciplina()">Adicionar Disciplina à Turma</button>
+                    <button onclick="adicionarDisciplina()">➕ Adicionar Disciplina à Turma</button>
                     <div id="listaDisciplinas"></div>
                     
                     <div id="botoesTurma">
-                        <button onclick="adicionarTurma()">Salvar Nova Turma</button>
+                        <button onclick="adicionarTurma()">💾 Salvar Nova Turma</button>
                     </div>
                 </div>
             </div>
             
             <div class="dados-cadastrados">
-                <h4>Turmas Cadastradas:</h4>
+                <h4>Lista de Turmas:</h4>
                 <div id="listaTurmasCadastradas"></div>
             </div>
 
             <hr style="border-top: 1px dashed #ccc;">
 
             <div id="formCadastroProfessores">
-                <h3>Professor e Atribuições</h3>
+                <h3>👨‍🏫 Professor e Atribuições</h3>
                 <div class="cadastro-item" id="cadastroProfessorContainer">
                     <div class="input-group">
                         <div>
@@ -351,24 +358,24 @@
                         </div>
                     
                     <div id="botoesProfessor">
-                        <button onclick="adicionarProfessor()">Salvar Novo Professor</button>
+                        <button onclick="adicionarProfessor()">💾 Salvar Novo Professor</button>
                         </div>
                 </div>
             </div>
 
             <div class="dados-cadastrados">
-                <h4>Professores Cadastrados:</h4>
+                <h4>Lista de Professores:</h4>
                 <div id="listaProfessoresCadastradas" class="lista-professores"></div>
             </div>
             
-            <button class="danger" onclick="limparLocalSorageTotalmente()">Limpar TODOS os Dados Salvos</button>
+            <button class="danger" onclick="limparLocalSorageTotalmente()">🗑️ Limpar TODOS os Dados Salvos</button>
         </div>
 
         <div class="tabela-wrapper">
             <h2>📅 Grade de Horários Gerada</h2>
-            <button id="btnGerarHorario" onclick="gerarHorario()">GERAR HORÁRIO AUTOMATICAMENTE</button>
+            <button id="btnGerarHorario" onclick="gerarHorario()">⚡ GERAR HORÁRIO AUTOMATICAMENTE</button>
             <button id="btnImprimir" onclick="window.print()">🖨️ Imprimir Horário</button>
-            <button class="danger" onclick="limparGrade()">Limpar Grade</button>
+            <button class="danger" onclick="limparGrade()">❌ Limpar Grade</button>
             <div id="log-status"></div>
             
             <table class="horario-tabela" id="gradeHorario">
@@ -409,8 +416,7 @@
         // ***************************************************************
         const LIMITE_AULAS_MES_PROFESSOR = 40; 
         const MAX_AULAS_DIA_PROFESSOR = 9; 
-        // Aumentado para um valor alto para desativar o limite semanal estrito na alocação, 
-        // deixando o limite MENSAL (40) como o principal.
+        // Aumentado para um valor alto para desativar o limite semanal estrito na alocação.
         const LIMITE_AULAS_SEMANA_PROFESSOR = 500; 
         // ***************************************************************
 
@@ -527,16 +533,22 @@
             let css = '';
             for (const nome in mapaCoresProfessores) {
                 const cor = mapaCoresProfessores[nome];
-                const className = 'prof-' + nome.replace(/[^a-zA-Z0-9]/g, ''); 
+                // Cria uma classe CSS segura
+                const className = 'prof-' + nome.replace(/[^a-zA-Z0-9]/g, '').replace(/\s/g, ''); 
                 
                 css += `
                     .aula-alocada.${className} { 
                         background-color: ${cor}; 
-                        border-left: 5px solid ${darkenColor(cor, -20)};
+                        border-left: 5px solid ${darkenColor(cor, -30)}; /* Borda mais escura para contraste */
                         color: #333;
+                        
+                        /* FORÇA CORES DE IMPRESSÃO */
+                        -webkit-print-color-adjust: exact !important; 
+                        print-color-adjust: exact !important;
                     }
                     .lista-professores .${className}-box {
                         background-color: ${cor};
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
                     }
                 `;
             }
@@ -571,8 +583,8 @@
                 return `<p>
                     <span><strong>${t.nome}</strong> (${TURNO_MAP[t.turno].nome}): ${disciplinas}</span>
                     <div>
-                        <button class="btn-acao btn-edit" onclick="editarTurma(${index})">Editar</button>
-                        <button class="btn-acao danger" onclick="excluirTurma(${index})">Excluir</button>
+                        <button class="btn-acao btn-edit" onclick="editarTurma(${index})">✏️ Editar</button>
+                        <button class="btn-acao danger" onclick="excluirTurma(${index})">🗑️ Excluir</button>
                     </div>
                 </p>`;
             }).join('');
@@ -597,8 +609,8 @@
 
             const botoesDiv = document.getElementById('botoesTurma');
             botoesDiv.innerHTML = `
-                <button onclick="salvarEdicaoTurma(${index})" style="background-color: #3498db;">Salvar Edição</button>
-                <button class="danger" onclick="cancelarEdicaoTurma()">Cancelar</button>
+                <button onclick="salvarEdicaoTurma(${index})" style="background-color: #3498db;">✅ Salvar Edição</button>
+                <button class="danger" onclick="cancelarEdicaoTurma()">❌ Cancelar</button>
             `;
             
             document.getElementById('cadastroTurmaContainer').classList.add('edit-active');
@@ -641,7 +653,7 @@
             document.getElementById('nomeTurma').value = '';
             disciplinasTemp = [];
             document.getElementById('listaDisciplinas').innerHTML = '';
-            document.getElementById('botoesTurma').innerHTML = '<button onclick="adicionarTurma()">Salvar Nova Turma</button>';
+            document.getElementById('botoesTurma').innerHTML = '<button onclick="adicionarTurma()">💾 Salvar Nova Turma</button>';
             document.getElementById('cadastroTurmaContainer').classList.remove('edit-active');
 
             // Salva dados e atualiza listas
@@ -659,7 +671,7 @@
             document.getElementById('blocoDisciplina').value = 'S'; 
             disciplinasTemp = [];
             document.getElementById('listaDisciplinas').innerHTML = '';
-            document.getElementById('botoesTurma').innerHTML = '<button onclick="adicionarTurma()">Salvar Nova Turma</button>';
+            document.getElementById('botoesTurma').innerHTML = '<button onclick="adicionarTurma()">💾 Salvar Nova Turma</button>';
             document.getElementById('cadastroTurmaContainer').classList.remove('edit-active');
             atualizarListaTurmas();
         }
@@ -696,7 +708,7 @@
                 
                 const restricoesCount = Object.keys(p.restricoes.indisponivel).filter(d => (p.restricoes.indisponivel[d] || []).length > 0).length;
                 const restricoes = restricoesCount > 0 ? `${restricoesCount} dias restritos` : 'Disponível';
-                const className = 'prof-' + p.nome.replace(/[^a-zA-Z0-9]/g, '');
+                const className = 'prof-' + p.nome.replace(/[^a-zA-Z0-9]/g, '').replace(/\s/g, '');
                 
                 return `<p>
                     <span>
@@ -705,8 +717,8 @@
                         | ${restricoes}
                     </span>
                     <div>
-                        <button class="btn-acao btn-edit" onclick="editarProfessor(${index})">Editar</button>
-                        <button class="btn-acao danger" onclick="excluirProfessor(${index})">Excluir</button>
+                        <button class="btn-acao btn-edit" onclick="editarProfessor(${index})">✏️ Editar</button>
+                        <button class="btn-acao danger" onclick="excluirProfessor(${index})">🗑️ Excluir</button>
                     </div>
                 </p>`;
             }).join('');
@@ -776,8 +788,8 @@
             const botoesDiv = document.getElementById('botoesProfessor');
             // ATUALIZAÇÃO DA MENSAGEM DO LIMITE
             botoesDiv.innerHTML = `
-                <button onclick="salvarEdicaoProfessor(${index})" style="background-color: #3498db;">Salvar Edição</button>
-                <button class="danger" onclick="cancelarEdicaoProfessor()">Cancelar</button>
+                <button onclick="salvarEdicaoProfessor(${index})" style="background-color: #3498db;">✅ Salvar Edição</button>
+                <button class="danger" onclick="cancelarEdicaoProfessor()">❌ Cancelar</button>
                 <p style="font-size: 0.8em; color: #7f8c8d;">* Limite de **${LIMITE_AULAS_MES_PROFESSOR} aulas/mês** (ou ${LIMITE_AULAS_MES_PROFESSOR} aulas na grade completa, que representa 4 semanas) e **máximo de ${MAX_AULAS_DIA_PROFESSOR} por dia** (combinado M/T).</p>
             `;
             
@@ -845,7 +857,7 @@
             
             // ATUALIZAÇÃO DA MENSAGEM DO LIMITE
             document.getElementById('botoesProfessor').innerHTML = `
-                <button onclick="adicionarProfessor()">Salvar Novo Professor</button>
+                <button onclick="adicionarProfessor()">💾 Salvar Novo Professor</button>
                 <p style="font-size: 0.8em; color: #7f8c8d;">* Limite de **${LIMITE_AULAS_MES_PROFESSOR} aulas/mês** (ou ${LIMITE_AULAS_MES_PROFESSOR} aulas na grade completa, que representa 4 semanas) e **máximo de ${MAX_AULAS_DIA_PROFESSOR} por dia** (combinado M/T).</p>
             `;
             document.getElementById('cadastroProfessorContainer').classList.remove('edit-active');
@@ -898,7 +910,7 @@
             disciplinasTemp.forEach((d, index) => {
                 const blocoLabel = d.bloco === 'G' ? 'Geminada' : 'Singular';
                 listaDiv.innerHTML += `<li>${d.nome}: ${d.aulas} aulas/semana (${blocoLabel})
-                    <button class="btn-acao danger" onclick="disciplinasTemp.splice(${index}, 1); atualizarListaDisciplinas();">X</button>
+                    <button class="btn-acao danger" onclick="disciplinasTemp.splice(${index}, 1); atualizarListaDisciplinas();">🗑️</button>
                 </li>`;
             });
             listaDiv.innerHTML += '</ul>';
@@ -1225,11 +1237,8 @@
                             profsCompativeis.forEach(profCandidato => {
                                 // Checagens de Limites e Restrições
                                 let cargaSemanalAtual = calcularCargaSemanal(grade, profCandidato.nome);
-                                // REGRA ALTERADA: O limite semanal agora é alto (500), mas o total de aulas 
-                                // alocadas na grade deve respeitar o limite MENSAL (40).
-                                // A verificação aqui é apenas para evitar que o algoritmo entre em loop infinito, 
-                                // excedendo o LIMITE_AULAS_MES_PROFESSOR.
-                                if (cargaSemanalAtual + 1 > LIMITE_AULAS_MES_PROFESSOR) return; // Checa o limite MENSAL (40)
+                                // REGRA ALTERADA: Checa o limite MENSAL (40)
+                                if (cargaSemanalAtual + 1 > LIMITE_AULAS_MES_PROFESSOR) return; 
 
                                 let aulasJaAlocadasDia = calcularAulasDia(grade, dIndex, profCandidato.nome);
                                 if (aulasJaAlocadasDia + 1 > MAX_AULAS_DIA_PROFESSOR) return;
@@ -1426,7 +1435,7 @@
                         const aula = grade[dIndex] ? grade[dIndex][pIndex] : null;
 
                         if (aula && aula.turno === turnoKey) {
-                            const className = 'prof-' + aula.professor.replace(/[^a-zA-Z0-9]/g, '');
+                            const className = 'prof-' + aula.professor.replace(/[^a-zA-Z0-9]/g, '').replace(/\s/g, '');
                             tdAula.className = `aula-alocada ${className}`;
                             
                             if (aula.tamanho > 1) {
@@ -1488,7 +1497,7 @@
             carregarDados(); 
             // ATUALIZAÇÃO DA MENSAGEM DO LIMITE
             document.querySelector('#botoesProfessor').innerHTML = `
-                <button onclick="adicionarProfessor()">Salvar Novo Professor</button>
+                <button onclick="adicionarProfessor()">💾 Salvar Novo Professor</button>
                 <p style="font-size: 0.8em; color: #7f8c8d;">* Limite de **${LIMITE_AULAS_MES_PROFESSOR} aulas/mês** (ou ${LIMITE_AULAS_MES_PROFESSOR} aulas na grade completa, que representa 4 semanas) e **máximo de ${MAX_AULAS_DIA_PROFESSOR} por dia** (combinado M/T).</p>
             `;
         });

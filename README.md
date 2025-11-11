@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Horários Otimizado (Animado e Colorido)</title>
+    <title>Gerador de Horários Otimizado (Grade por Turma)</title>
     <style>
         /* ESTILOS GERAIS E ANIMAÇÃO DE INTERFACE */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f4f7f6; color: #333; }
@@ -161,14 +161,24 @@
             margin-left: -2px;
         }
         
-        /* Estilos da Tabela */
+        /* Estilos da Tabela (Grade por Turma) */
         .tabela-wrapper { flex-grow: 1; overflow-x: auto; min-width: 600px; }
+        
+        /* Contêiner de grades (para impressão, deve ser visível) */
+        #gradesHorarioContainer {
+            display: flex;
+            flex-direction: column;
+            gap: 30px; /* Espaço entre as grades */
+        }
+
         .horario-tabela { 
             width: 100%; 
             min-width: 950px; 
             border-collapse: collapse; 
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); 
             background-color: #ffffff; 
+            /* Para quebrar página na impressão */
+            page-break-inside: avoid;
         }
         .horario-tabela th { background-color: #1a5276; color: white; padding: 12px 8px; border: 1px solid #bdc3c7; }
         .horario-tabela td { 
@@ -196,7 +206,7 @@
         }
 
         .professor-alocado { font-weight: bold; display: block; margin-bottom: 3px; }
-        .turma-alocada { font-size: 0.8em; color: #34495e; }
+        .turma-alocada { font-size: 0.9em; color: #34495e; }
         .cabecalho-turno { background-color: #34495e; color: white; font-weight: bold; font-size: 1.1em; padding: 15px 10px !important; text-align: left !important; border-bottom: 5px solid #1a5276 !important; border-top: 5px solid #1a5276 !important; }
         .aula-geminada { border-bottom: none !important; }
 
@@ -212,7 +222,7 @@
                 margin: 0; 
                 padding: 0;
                 background-color: white;
-                font-size: 11pt; /* Aumenta um pouco a fonte */
+                font-size: 10pt;
             }
             .container { flex-wrap: wrap; }
             .painel-cadastro, .regra-status, button, #log-status, h1 {
@@ -223,23 +233,33 @@
                 overflow: visible; 
                 min-width: 100%;
             }
+            /* Garantir que as grades individuais sejam visíveis e tenham quebras de página */
+            #gradesHorarioContainer {
+                 gap: 50px;
+                 display: block !important;
+            }
+            h3 {
+                page-break-after: avoid; /* Mantém o título com a tabela */
+                margin-top: 50px !important;
+                font-size: 1.2em !important;
+                border-bottom: 3px solid #2980b9 !important;
+            }
             .horario-tabela { 
                 box-shadow: none; 
                 min-width: 100%;
-                font-size: 10pt;
-                page-break-inside: avoid; /* Tenta evitar quebrar a tabela */
+                font-size: 9pt;
+                page-break-inside: avoid;
             }
             .horario-tabela th { 
-                background-color: #34495e !important; /* Cor mais escura para títulos */
+                background-color: #34495e !important; 
                 color: white !important;
                 -webkit-print-color-adjust: exact; 
                 print-color-adjust: exact;
-                page-break-before: auto;
             }
             .horario-tabela td {
-                padding: 5px;
+                padding: 4px;
                 border: 1px solid #aaa;
-                height: 40px;
+                height: 35px;
                 vertical-align: middle;
             }
             .coluna-horario { 
@@ -249,7 +269,7 @@
                 print-color-adjust: exact;
             }
             .intervalo {
-                background-color: #e6b3b3 !important; /* Cor pastel para intervalo */
+                background-color: #e6b3b3 !important; 
                 -webkit-print-color-adjust: exact; 
                 print-color-adjust: exact;
                 color: #333 !important;
@@ -257,8 +277,8 @@
             
             /* FORÇA A IMPRESSÃO DAS CORES DE FUNDO DAS AULAS */
             .aula-alocada { 
-                color: #000 !important; /* Força texto preto sobre as cores */
-                border-left: 5px solid black !important; /* Borda preta forte */
+                color: #000 !important; 
+                border-left: 5px solid black !important; 
                 -webkit-print-color-adjust: exact !important; 
                 print-color-adjust: exact !important;
             }
@@ -298,6 +318,7 @@
                             <select type="number" id="turnoTurma">
                                 <option value="M">Manhã (M)</option>
                                 <option value="T">Tarde (T)</option>
+                                <option value="A">Ambos (A) - Raro</option>
                             </select>
                         </div>
                     </div>
@@ -379,20 +400,8 @@
             <button class="danger" onclick="limparGrade()">❌ Limpar Grade</button>
             <div id="log-status"></div>
             
-            <table class="horario-tabela" id="gradeHorario">
-                <thead>
-                    <tr>
-                        <th style="width: 120px;">Horário / Turno</th>
-                        <th>Segunda-feira</th>
-                        <th>Terça-feira</th>
-                        <th>Quarta-feira</th>
-                        <th>Quinta-feira</th>
-                        <th>Sexta-feira</th>
-                    </tr>
-                </thead>
-                <tbody id="corpoTabelaHorario">
-                    </tbody>
-            </table>
+            <div id="gradesHorarioContainer">
+                </div>
         </div>
     </div>
 
@@ -411,6 +420,7 @@
         const TURNO_MAP = {
             'M': { nome: 'Manhã', slots: [0, 1, 2, 4, 5, 6, 7], slotsGeminadas: [[0,1], [1,2], [4,5], [5,6], [6,7]] }, 
             'T': { nome: 'Tarde', slots: [8, 9, 10, 12, 13, 14, 15], slotsGeminadas: [[8,9], [9,10], [12,13], [13,14], [14,15]] }, 
+            'A': { nome: 'Ambos', slots: [...[0, 1, 2, 4, 5, 6, 7], ...[8, 9, 10, 12, 13, 14, 15]], slotsGeminadas: [...[[0,1], [1,2], [4,5], [5,6], [6,7]], ...[[8,9], [9,10], [12,13], [13,14], [14,15]]] } // Usado para filtro
         };
         const INTERVALO_MAP = { M: 3, T: 11 }; 
         const LAST_MORNING_SLOT = 7; // Slot 7: 12:30-13:20
@@ -449,15 +459,73 @@
             }
         }
 
+        /**
+         * Adiciona dados iniciais de exemplo se o LocalStorage estiver vazio.
+         */
+        function carregarDadosIniciais() {
+            // Exemplo de Turmas
+            turmas = [
+                {
+                    nome: '1º A',
+                    turno: 'M',
+                    disciplinas: [
+                        { nome: 'Matemática', aulas: 4, bloco: 'G' }, // 2 Blocos de 2
+                        { nome: 'Português', aulas: 5, bloco: 'S' }   // 5 Singulares
+                    ]
+                },
+                {
+                    nome: '2º B',
+                    turno: 'T',
+                    disciplinas: [
+                        { nome: 'História', aulas: 3, bloco: 'C' },   // 1 Bloco de 2, 1 Singular
+                        { nome: 'Ciências', aulas: 2, bloco: 'G' }   // 1 Bloco de 2
+                    ]
+                }
+            ];
+
+            // Exemplo de Professores
+            professores = [
+                {
+                    nome: 'Prof. Ana (Mat/His)',
+                    turno: 'A', // Ambos
+                    vinculados: ['1º A-Matemática', '2º B-História'],
+                    restricoes: {
+                        indisponivel: {
+                            'Seg': [0, 1], // Indisponível na 1ª e 2ª aula de segunda
+                            'Sex': [15]    // Indisponível na última aula de sexta
+                        }
+                    }
+                },
+                {
+                    nome: 'Prof. João (Port/Cien)',
+                    turno: 'M', // Prefere Manhã
+                    vinculados: ['1º A-Português', '2º B-Ciências'],
+                    restricoes: {
+                        indisponivel: {}
+                    }
+                }
+            ];
+            
+            console.log("Dados iniciais carregados para demonstração.");
+        }
+
+
         function carregarDados() {
             try {
                 const turmasSalvas = localStorage.getItem('horarios_turmas');
                 const professoresSalvos = localStorage.getItem('horarios_professores');
                 const gradeSalva = localStorage.getItem('horarios_grade_atual');
 
-                if (turmasSalvas) turmas = JSON.parse(turmasSalvas);
-                if (professoresSalvos) professores = JSON.parse(professoresSalvos);
-                if (gradeSalva) gradeAtual = JSON.parse(gradeSalva);
+                let dadosIniciaisCarregados = false;
+                
+                if (turmasSalvas && professoresSalvos && JSON.parse(turmasSalvas).length > 0) { 
+                    turmas = JSON.parse(turmasSalvas);
+                    professores = JSON.parse(professoresSalvos);
+                    if (gradeSalva) gradeAtual = JSON.parse(gradeSalva);
+                } else {
+                    carregarDadosIniciais(); // Chama a função com os dados de exemplo
+                    dadosIniciaisCarregados = true;
+                }
                 
                 // Processamento de adaptação para a nova estrutura de dados (vinculação)
                 professores = professores.map(p => {
@@ -488,7 +556,7 @@
                 
                 if (turmas.length > 0 || professores.length > 0) {
                      document.getElementById('log-status').className = 'sucesso';
-                     document.getElementById('log-status').textContent = `✅ Dados carregados! ${turmas.length} turmas e ${professores.length} professores encontrados no LocalStorage.`;
+                     document.getElementById('log-status').textContent = `✅ Dados carregados! ${turmas.length} turmas e ${professores.length} professores encontrados no LocalStorage. ${dadosIniciaisCarregados ? '(Dados iniciais de DEMONSTRAÇÃO carregados)' : ''}`;
                 }
 
             } catch (e) {
@@ -1251,7 +1319,8 @@
                 
                 DIAS_SEMANA.forEach((diaNome, dIndex) => {
                     const diaCurto = DIAS_CURTO[dIndex];
-                    const turnoSlots = TURNO_MAP[aula.turno].slots;
+                    // Se for turno 'A', pega todos os slots de aula dos dois turnos
+                    const turnoSlots = (aula.turno === 'A' ? TURNO_MAP['A'].slots : TURNO_MAP[aula.turno].slots);
                     
                     if (aula.tamanho === 1) {
                          // Lógica para aulas SINGULARES (ou a unidade de bloco ímpar)
@@ -1271,7 +1340,7 @@
                                 if (restricoesDia.includes(pIndex)) return;
                                 
                                 // REGRA CORRIGIDA: Professor da tarde só pode iniciar na 2ª aula (slot 9) se tiver a última aula da manhã (slot 7)
-                                if (aula.turno === 'T' && pIndex === FIRST_AFTERNOON_SLOT) {
+                                if (pIndex === FIRST_AFTERNOON_SLOT) {
                                     const isLastMorningAllocated = grade[dIndex][LAST_MORNING_SLOT] && grade[dIndex][LAST_MORNING_SLOT].professor === profCandidato.nome;
                                     
                                     if (isLastMorningAllocated) {
@@ -1280,14 +1349,16 @@
                                 }
 
                                 // Checa Janela com a nova alocação
-                                let isJanela = checarJanela(grade, dIndex, pIndex, profCandidato.nome, turnoSlots, 1);
+                                // Se a aula for turno 'A', deve checar janelas nos dois turnos
+                                const slotsParaJanela = (profCandidato.turno === 'A' ? TURNO_MAP['A'].slots : TURNO_MAP[profCandidato.turno].slots);
+                                let isJanela = checarJanela(grade, dIndex, pIndex, profCandidato.nome, slotsParaJanela, 1);
                                 
                                 posicoesViáveis.push({ dIndex, pIndex, professor: profCandidato.nome, isJanela, tamanho: 1 });
                             });
                         });
                     } else if (aula.tamanho === GEMINADA_SIZE) {
                          // Lógica para Blocos de 2
-                         const slotsGeminadas = TURNO_MAP[aula.turno].slotsGeminadas;
+                         const slotsGeminadas = (aula.turno === 'A' ? TURNO_MAP['A'].slotsGeminadas : TURNO_MAP[aula.turno].slotsGeminadas);
                         
                          slotsGeminadas.forEach(pair => {
                             const [pIndex1, pIndex2] = pair;
@@ -1307,7 +1378,7 @@
                                 if (restricoesDia.includes(pIndex1) || restricoesDia.includes(pIndex2)) return;
                                 
                                 // REGRA CORRIGIDA: Professor da tarde só pode iniciar na 2ª aula (slot 9) se tiver a última aula da manhã (slot 7)
-                                if (aula.turno === 'T' && pIndex1 === FIRST_AFTERNOON_SLOT) {
+                                if (pIndex1 === FIRST_AFTERNOON_SLOT) {
                                      const isLastMorningAllocated = grade[dIndex][LAST_MORNING_SLOT] && grade[dIndex][LAST_MORNING_SLOT].professor === profCandidato.nome;
                                     
                                     if (isLastMorningAllocated) {
@@ -1337,14 +1408,17 @@
                         // 3. Turno Preferencial: Prioriza professor com turno preferencial igual ao da turma
                         const profA = professores.find(p => p.nome === a.professor);
                         const profB = professores.find(p => p.nome === b.professor);
-                        const prefA = (profA.turno === aula.turno) ? 0 : 1;
-                        const prefB = (profB.turno === aula.turno) ? 0 : 1;
+                        // Se a turma for 'A' (Ambos), a preferência do professor é ignorada neste critério
+                        const prefA = (aula.turno !== 'A' && profA.turno === aula.turno) ? 0 : 1;
+                        const prefB = (aula.turno !== 'A' && profB.turno === aula.turno) ? 0 : 1;
                         if (prefA !== prefB) return prefA - prefB;
                         
                         return 0;
                     });
 
                     const alocacao = posicoesViáveis[0];
+                    // Determina o turno real do slot alocado
+                    const turnoReal = (alocacao.pIndex !== undefined ? PERIODOS_HORA[alocacao.pIndex] : PERIODOS_HORA[alocacao.pIndex1]).includes('(I-M)') ? 'M' : (PERIODOS_HORA[alocacao.pIndex] || PERIODOS_HORA[alocacao.pIndex1]).includes('(I-T)') ? 'T' : (alocacao.pIndex !== undefined && alocacao.pIndex < 8) || alocacao.pIndex1 < 8 ? 'M' : 'T';
 
                     if (aula.tamanho === 1) {
                         grade[alocacao.dIndex][alocacao.pIndex] = {
@@ -1352,7 +1426,7 @@
                             turma: aula.turma,
                             disciplina: aula.disciplina,
                             professor: alocacao.professor,
-                            turno: aula.turno,
+                            turno: turnoReal, // Usa o turno real do slot
                             tamanho: 1,
                             chave: aula.chave
                         };
@@ -1363,7 +1437,7 @@
                             turma: aula.turma,
                             disciplina: aula.disciplina,
                             professor: alocacao.professor,
-                            turno: aula.turno,
+                            turno: turnoReal, // Usa o turno real do slot
                             tamanho: GEMINADA_SIZE,
                             bloco: 'start',
                             chave: aula.chave
@@ -1373,7 +1447,7 @@
                             turma: aula.turma,
                             disciplina: aula.disciplina,
                             professor: alocacao.professor,
-                            turno: aula.turno,
+                            turno: turnoReal, // Usa o turno real do slot
                             tamanho: GEMINADA_SIZE,
                             bloco: 'end',
                             chave: aula.chave
@@ -1404,18 +1478,17 @@
         }
 
         function renderizarGrade(grade, aulasNaoAlocadas) {
-            // Lógica de renderização da grade (mantida a mesma)
-            const corpoTabela = document.getElementById('corpoTabelaHorario');
+            const container = document.getElementById('gradesHorarioContainer');
             const logStatus = document.getElementById('log-status');
-            corpoTabela.innerHTML = ''; 
-
+            container.innerHTML = ''; // Limpa o container para inserir as grades individuais
+            
             let totalAulas = aulasPendentes.reduce((sum, aula) => sum + aula.tamanho, 0);
             let aulasAlocadas = totalAulas - aulasNaoAlocadas;
 
             if (totalAulas > 0) {
                 if (aulasNaoAlocadas === 0) {
                     logStatus.className = 'sucesso';
-                    logStatus.textContent = `✅ Sucesso! Todas as ${aulasAlocadas} aulas foram alocadas, **atribuindo as turmas aos professores** e respeitando todos os limites.`;
+                    logStatus.textContent = `✅ Sucesso! Todas as ${aulasAlocadas} aulas foram alocadas, atribuindo as turmas aos professores e respeitando todos os limites.`;
                 } else if (aulasNaoAlocadas < totalAulas) {
                     logStatus.className = 'aviso';
                     logStatus.textContent = `⚠️ AVISO: ${aulasNaoAlocadas} de ${totalAulas} aulas NÃO puderam ser alocadas. ${aulasAlocadas} aulas foram alocadas com sucesso. Verifique o limite de carga horária (**${LIMITE_AULAS_MES_PROFESSOR} aulas/mês**), restrições e se a demanda é superior aos professores disponíveis.`;
@@ -1430,106 +1503,133 @@
             } else {
                  logStatus.className = '';
                  logStatus.textContent = 'Aguardando cadastro de turmas e professores...';
+                 return;
             }
             
-            let isFirstTurno = true;
+            // --- NOVO LOOP PARA GERAR UMA GRADE POR TURMA ---
             
-            ['M', 'T'].forEach(turnoKey => {
-                const turno = TURNO_MAP[turnoKey];
+            // Filtra turmas que foram alocadas ou que pelo menos tem aulas cadastradas
+            const turmasParaExibir = turmas.filter(t => t.disciplinas.length > 0); 
+
+            turmasParaExibir.forEach(turma => {
+                const turmaNome = turma.nome;
+                const turmaTurno = turma.turno;
+
+                // 1. Título da Turma
+                const h3 = document.createElement('h3');
+                h3.textContent = `Grade de Horários: ${turmaNome} (Turno ${TURNO_MAP[turmaTurno].nome})`;
+                h3.style.marginTop = '30px';
+                h3.style.color = '#2980b9';
+                h3.style.borderBottom = '2px solid #2980b9';
+                h3.style.paddingBottom = '5px';
+                container.appendChild(h3);
                 
-                if (!isFirstTurno) {
-                    const trCabecalhoDias = document.createElement('tr');
-                    trCabecalhoDias.innerHTML = `
-                        <th style="width: 120px;">Horário / Turno</th>
+                // 2. Cria a Tabela
+                const table = document.createElement('table');
+                table.className = 'horario-tabela grade-turma';
+                
+                // 3. Cabeçalho
+                const thead = document.createElement('thead');
+                thead.innerHTML = `
+                    <tr>
+                        <th style="width: 120px;">Horário / Aula</th>
                         <th>Segunda-feira</th>
                         <th>Terça-feira</th>
                         <th>Quarta-feira</th>
                         <th>Quinta-feira</th>
                         <th>Sexta-feira</th>
-                    `;
-                    corpoTabela.appendChild(trCabecalhoDias);
-                }
+                    </tr>
+                `;
+                table.appendChild(thead);
                 
-                const trCabecalhoTurno = document.createElement('tr');
-                const tdCabecalhoTurno = document.createElement('td');
-                tdCabecalhoTurno.className = 'cabecalho-turno';
-                tdCabecalhoTurno.textContent = `TURNO ${turnoKey} - ${turno.nome.toUpperCase()}`;
-                tdCabecalhoTurno.setAttribute('colspan', DIAS_SEMANA.length + 1); 
-                trCabecalhoTurno.appendChild(tdCabecalhoTurno);
-                corpoTabela.appendChild(trCabecalhoTurno);
+                const tbody = document.createElement('tbody');
                 
-                let slotCounter = 0; 
+                let isFirstTurnoBlock = true;
                 
-                turno.slots.forEach(pIndex => {
+                // Itera sobre Manhã e Tarde para preencher
+                ['M', 'T'].forEach(turnoKey => {
+                    const turno = TURNO_MAP[turnoKey];
                     
-                    if (Object.values(INTERVALO_MAP).includes(pIndex)) return; 
-
-                    slotCounter++;
-                    const tr = document.createElement('tr');
-                    
-                    const tdHorario = document.createElement('td');
-                    tdHorario.className = 'coluna-horario';
-                    tdHorario.innerHTML = `Aula ${slotCounter} (${turnoKey})<br><span>${PERIODOS_HORA[pIndex]}</span>`;
-                    tr.appendChild(tdHorario);
-
-                    DIAS_SEMANA.forEach((dia, dIndex) => {
-                        const tdAula = document.createElement('td');
-                        const aula = grade[dIndex] ? grade[dIndex][pIndex] : null;
-
-                        if (aula && aula.turno === turnoKey) {
-                            const className = 'prof-' + aula.professor.replace(/[^a-zA-Z0-9]/g, '').replace(/\s/g, '');
-                            tdAula.className = `aula-alocada ${className}`;
-                            
-                            if (aula.tamanho > 1) {
-                                if (aula.bloco === 'start') {
-                                    tdAula.classList.add('aula-geminada');
-                                } else if (aula.bloco === 'end') {
-                                    tdAula.style.borderTop = 'none'; 
-                                }
-                            }
-
-                            tdAula.innerHTML = `
-                                <span class="professor-alocado">${aula.professor}</span>
-                                <span class="turma-alocada">${aula.turma} (${aula.disciplina})</span>
-                            `;
-                        } else {
-                            tdAula.textContent = '';
-                        }
-                        tr.appendChild(tdAula);
-                    });
-                    corpoTabela.appendChild(tr);
-
-                    if (slotCounter === 3) { 
-                        const intervaloPos = INTERVALO_MAP[turnoKey];
-                        const trIntervalo = document.createElement('tr');
+                    // Condição para exibir o bloco: se o turno da turma for o turno atual OU 'Ambos'
+                    if (turmaTurno === turnoKey || turmaTurno === 'A') {
                         
-                        const tdIntervaloHorario = document.createElement('td');
-                        tdIntervaloHorario.className = 'coluna-horario intervalo';
-                        tdIntervaloHorario.innerHTML = `Intervalo<br>(${turnoKey})<br><span>${PERIODOS_HORA[intervaloPos]}</span>`;
-                        trIntervalo.appendChild(tdIntervaloHorario);
+                        const trCabecalhoTurno = document.createElement('tr');
+                        const tdCabecalhoTurno = document.createElement('td');
+                        tdCabecalhoTurno.className = 'cabecalho-turno';
+                        tdCabecalhoTurno.textContent = `TURNO ${turnoKey} - ${turno.nome.toUpperCase()}`;
+                        tdCabecalhoTurno.setAttribute('colspan', DIAS_SEMANA.length + 1); 
+                        trCabecalhoTurno.appendChild(tdCabecalhoTurno);
+                        tbody.appendChild(trCabecalhoTurno);
 
-                        const tdIntervalo = document.createElement('td');
-                        tdIntervalo.textContent = `INTERVALO (TURNO ${turnoKey})`;
-                        tdIntervalo.className = 'intervalo';
-                        tdIntervalo.setAttribute('colspan', DIAS_SEMANA.length);
-                        trIntervalo.appendChild(tdIntervalo);
+                        let aulaTurnoCounter = 0;
+                        turno.slots.forEach(pIndex => {
+                            
+                            if (Object.values(INTERVALO_MAP).includes(pIndex)) return; 
+                            aulaTurnoCounter++;
+                            
+                            const tr = document.createElement('tr');
+                            
+                            const tdHorario = document.createElement('td');
+                            tdHorario.className = 'coluna-horario';
+                            tdHorario.innerHTML = `Aula ${aulaTurnoCounter} (${turnoKey})<br><span>${PERIODOS_HORA[pIndex]}</span>`;
+                            tr.appendChild(tdHorario);
 
-                        corpoTabela.appendChild(trIntervalo);
+                            DIAS_SEMANA.forEach((dia, dIndex) => {
+                                const tdAula = document.createElement('td');
+                                const aula = grade[dIndex] ? grade[dIndex][pIndex] : null;
+
+                                // *** MODIFICAÇÃO CHAVE: APENAS AULAS DESTA TURMA ***
+                                if (aula && aula.turma === turmaNome) {
+                                    const className = 'prof-' + aula.professor.replace(/[^a-zA-Z0-9]/g, '').replace(/\s/g, '');
+                                    tdAula.className = `aula-alocada ${className}`;
+                                    
+                                    // Lógica para Blocos (Geminação)
+                                    if (aula.tamanho > 1) {
+                                        if (aula.bloco === 'start') {
+                                            tdAula.classList.add('aula-geminada');
+                                        } else if (aula.bloco === 'end') {
+                                            tdAula.style.borderTop = 'none'; 
+                                        }
+                                    }
+
+                                    // Preenche a célula APENAS com Disciplina e Professor
+                                    tdAula.innerHTML = `
+                                        <span class="professor-alocado">${aula.professor}</span>
+                                        <span class="turma-alocada">${aula.disciplina}</span>
+                                    `;
+                                } else {
+                                    tdAula.textContent = '';
+                                }
+                                tr.appendChild(tdAula);
+                            });
+                            tbody.appendChild(tr);
+
+                            // Adiciona o Intervalo
+                            if (aulaTurnoCounter === 3) { 
+                                const intervaloPos = INTERVALO_MAP[turnoKey];
+                                const trIntervalo = document.createElement('tr');
+                                
+                                const tdIntervaloHorario = document.createElement('td');
+                                tdIntervaloHorario.className = 'coluna-horario intervalo';
+                                tdIntervaloHorario.innerHTML = `Intervalo<br>(${turnoKey})<br><span>${PERIODOS_HORA[intervaloPos]}</span>`;
+                                trIntervalo.appendChild(tdIntervaloHorario);
+
+                                const tdIntervalo = document.createElement('td');
+                                tdIntervalo.textContent = `INTERVALO (TURNO ${turnoKey})`;
+                                tdIntervalo.className = 'intervalo';
+                                tdIntervalo.setAttribute('colspan', DIAS_SEMANA.length);
+                                trIntervalo.appendChild(tdIntervalo);
+
+                                tbody.appendChild(trIntervalo);
+                            }
+                        });
+                        
+                        isFirstTurnoBlock = false;
                     }
                 });
-                
-                if (turnoKey === 'M') {
-                    const trSeparador = document.createElement('tr');
-                    trSeparador.classList.add('separador-turno');
-                    const tdSeparador = document.createElement('td');
-                    tdSeparador.setAttribute('colspan', DIAS_SEMANA.length + 1);
-                    tdSeparador.style.height = '10px';
-                    tdSeparador.style.backgroundColor = '#ecf0f1';
-                    trSeparador.appendChild(tdSeparador);
-                    corpoTabela.appendChild(trSeparador);
-                }
-                
-                isFirstTurno = false;
+
+                table.appendChild(tbody);
+                container.appendChild(table);
             });
         }
 

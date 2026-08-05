@@ -14,9 +14,10 @@
    DADOS
    ========================================================================= */
 let unidades = [
-  { id: 1, nome: "Senac Paulista - MedioTec", icone: "🎓", cidade: "Paulista - PE" },
-  { id: 2, nome: "Senac Recife - MedioTec", icone: "🏫", cidade: "Recife - PE" },
-  { id: 3, nome: "Senac Olinda - MedioTec", icone: "🏢", cidade: "Olinda - PE" }
+  { id: 1, nome: "Senac Paulista - MedioTec", icone: "🎓", cidade: "Paulista - PE", tipo: "MedioTec" },
+  { id: 2, nome: "Senac Recife - MedioTec", icone: "🏫", cidade: "Recife - PE", tipo: "MedioTec" },
+  { id: 3, nome: "Senac Olinda - MedioTec", icone: "🏢", cidade: "Olinda - PE", tipo: "MedioTec" },
+  { id: 4, nome: "Faculdade Senac Recife", icone: "🏛️", cidade: "Recife - PE", tipo: "Faculdade" }
 ];
 
 const opcoesCoresProf = [
@@ -29,12 +30,31 @@ const opcoesCoresProf = [
 
 const coresAvatar = ['bg-cyan-600','bg-purple-600','bg-emerald-600','bg-orange-500','bg-pink-600','bg-blue-600','bg-amber-600'];
 
+const paletaLegenda = [
+  { texto: 'text-pink-600', fundo: 'bg-pink-50', borda: 'border-pink-200' },
+  { texto: 'text-orange-600', fundo: 'bg-orange-50', borda: 'border-orange-200' },
+  { texto: 'text-emerald-600', fundo: 'bg-emerald-50', borda: 'border-emerald-200' },
+  { texto: 'text-blue-600', fundo: 'bg-blue-50', borda: 'border-blue-200' },
+  { texto: 'text-purple-600', fundo: 'bg-purple-50', borda: 'border-purple-200' },
+  { texto: 'text-red-600', fundo: 'bg-red-50', borda: 'border-red-200' },
+  { texto: 'text-cyan-600', fundo: 'bg-cyan-50', borda: 'border-cyan-200' },
+  { texto: 'text-amber-600', fundo: 'bg-amber-50', borda: 'border-amber-200' },
+  { texto: 'text-indigo-600', fundo: 'bg-indigo-50', borda: 'border-indigo-200' },
+  { texto: 'text-rose-600', fundo: 'bg-rose-50', borda: 'border-rose-200' }
+];
+function corLegendaProfessor(nomeProf) {
+  let soma = 0;
+  for (let i = 0; i < nomeProf.length; i++) soma += nomeProf.charCodeAt(i);
+  return paletaLegenda[soma % paletaLegenda.length];
+}
+
 const iconesDisponiveis = ["🎓", "💻", "🎮", "⚙️", "📊", "📱", "🍎", "📐", "⛵", "🎨"];
 
 const horariosPorTurno = {
-  "Manhã": ["07:30-08:20", "08:20-09:10", "09:10-10:00", "10:20-11:10", "11:10-12:00", "12:00-12:50", "12:50-13:40"],
-  "Tarde": ["13:40-14:30", "14:30-15:20", "15:20-16:10", "16:30-17:20", "17:20-18:10", "18:10-19:00", "19:00-20:00"]
+  "Manhã": ["07:00-07:50", "07:50-08:40", "08:40-09:30", "10:00-10:50", "10:50-11:40", "11:40-12:30", "12:30-13:20"],
+  "Tarde": ["13:40-14:30", "14:30-15:20", "15:20-16:10", "16:40-17:30", "17:30-18:20", "18:20-19:10", "19:10-20:00"]
 };
+const intervalosPorTurno = { "Manhã": "09:30-10:00", "Tarde": "16:10-16:40" };
 const diasSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
 
 // Banco de dados centralizado por Unidade (id)
@@ -70,15 +90,6 @@ let dadosPorUnidade = {
       { id: 9, nome: "Matemática",      tipo: "Matemática", professor: "THOMAS BARROS", turma: "3 ANO A", aulasSemana: 2 },
       { id: 10, nome: "Inovação",       tipo: "Outras", professor: "ÍTALO NUNES",    turma: "3 ANO A", aulasSemana: 1 }
     ],
-    usuarios: [
-      { id: 1, nome: "Valdir Rodrigues", email: "valdirsenacprojetos@gmail.com", perfil: "Administrador", ativo: true, dataCadastro: "2026-01-23", protegido: true },
-      { id: 2, nome: "Thomás Barros",    email: "professorthomas87@gmail.com",   perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-26" },
-      { id: 3, nome: "Cybelle Cunha",    email: "cybellercunha@uis.pe.senac.br", perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-26" },
-      { id: 4, nome: "Heitor Duarte",    email: "duartehhf@gmail.com",           perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-26" },
-      { id: 5, nome: "Altemar Galvão",   email: "altemargalvao.pro@gmail.com",   perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-26" },
-      { id: 6, nome: "João Emanuel",     email: "joaoemanuel.prof@gmail.com",    perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-27" },
-      { id: 7, nome: "Ítalo Nunes",      email: "italonunes.prof@gmail.com",     perfil: "Usuário",       ativo: false, dataCadastro: "2026-01-27" }
-    ],
     indisponibilidadesProf: {},
     gradeGerada: null,
     turmaSelecionadaGrade: ""
@@ -88,9 +99,6 @@ let dadosPorUnidade = {
     turmas: [{ id: 101, nome: "1 ANO RECIFE", turno: "Manhã", tipoCurso: "MedioTec" }],
     cursos: [{ id: 101, nome: "Mediotec Enfermagem - Recife", descricao: "", icone: "🍎", cor: "#10b981" }],
     disciplinas: [{ id: 101, nome: "Anatomia", tipo: "Outras", professor: "PROFESSOR RECIFE 1", turma: "1 ANO RECIFE", aulasSemana: 4 }],
-    usuarios: [
-      { id: 102, nome: "Carlos Recife", email: "carlos@pe.senac.br", perfil: "Administrador", ativo: true, dataCadastro: "2026-02-02", protegido: true }
-    ],
     indisponibilidadesProf: {},
     gradeGerada: null,
     turmaSelecionadaGrade: ""
@@ -100,20 +108,45 @@ let dadosPorUnidade = {
     turmas: [{ id: 201, nome: "1 ANO OLINDA", turno: "Tarde", tipoCurso: "MedioTec" }],
     cursos: [{ id: 201, nome: "Mediotec Administração - Olinda", descricao: "", icone: "📊", cor: "#f97316" }],
     disciplinas: [{ id: 201, nome: "Gestão", tipo: "Outras", professor: "PROFESSOR OLINDA 1", turma: "1 ANO OLINDA", aulasSemana: 3 }],
-    usuarios: [
-      { id: 202, nome: "Mariana Olinda", email: "mariana@pe.senac.br", perfil: "Administrador", ativo: true, dataCadastro: "2026-02-05", protegido: true }
-    ],
+    indisponibilidadesProf: {},
+    gradeGerada: null,
+    turmaSelecionadaGrade: ""
+  },
+  4: {
+    professores: [],
+    turmas: [],
+    cursos: [],
+    disciplinas: [],
     indisponibilidadesProf: {},
     gradeGerada: null,
     turmaSelecionadaGrade: ""
   }
 };
 
+// Lista global de usuários (um usuário pode ter acesso a várias unidades)
+let usuariosGlobais = [
+  { id: 1, nome: "Valdir Rodrigues", email: "valdirsenacprojetos@gmail.com", perfil: "Administrador", ativo: true, dataCadastro: "2026-01-23", protegido: true, podeEditarHorarios: true, unidadesVinculadas: [], usuarioLogin: "valdir.rodrigues", senha: "admin123" },
+  { id: 2, nome: "Thomás Barros",    email: "professorthomas87@gmail.com",   perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-26", podeEditarHorarios: false, unidadesVinculadas: [1], usuarioLogin: "thomas.barros", senha: "thomas123" },
+  { id: 3, nome: "Cybelle Cunha",    email: "cybellercunha@uis.pe.senac.br", perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-26", podeEditarHorarios: false, unidadesVinculadas: [1], usuarioLogin: "cybelle.cunha", senha: "cybelle123" },
+  { id: 4, nome: "Heitor Duarte",    email: "duartehhf@gmail.com",           perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-26", podeEditarHorarios: false, unidadesVinculadas: [1], usuarioLogin: "heitor.duarte", senha: "heitor123" },
+  { id: 5, nome: "Altemar Galvão",   email: "altemargalvao.pro@gmail.com",   perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-26", podeEditarHorarios: false, unidadesVinculadas: [1], usuarioLogin: "altemar.galvao", senha: "altemar123" },
+  { id: 6, nome: "João Emanuel",     email: "joaoemanuel.prof@gmail.com",    perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-27", podeEditarHorarios: false, unidadesVinculadas: [1], usuarioLogin: "joao.emanuel", senha: "joao123" },
+  { id: 7, nome: "Ítalo Nunes",      email: "italonunes.prof@gmail.com",     perfil: "Usuário",       ativo: false, dataCadastro: "2026-01-27", podeEditarHorarios: false, unidadesVinculadas: [1], usuarioLogin: "italo.nunes", senha: "italo123" },
+  { id: 8, nome: "Carlos Recife",    email: "carlos@pe.senac.br",            perfil: "Usuário",       ativo: true, dataCadastro: "2026-02-02", podeEditarHorarios: true, unidadesVinculadas: [2], usuarioLogin: "carlos.recife", senha: "carlos123" },
+  { id: 9, nome: "Mariana Olinda",   email: "mariana@pe.senac.br",           perfil: "Usuário",       ativo: true, dataCadastro: "2026-02-05", podeEditarHorarios: true, unidadesVinculadas: [3], usuarioLogin: "mariana.olinda", senha: "mariana123" }
+];
+
 /* =========================================================================
    ESTADO GLOBAL
    ========================================================================= */
-let unidadeSelecionada = unidades[0];
+let usuarioLogado = null;
+let unidadeSelecionada = null;
 let telaAtual = 'Início';
+
+/* Estado da tela de login */
+let loginUsuarioDigitado = "";
+let loginSenhaDigitada = "";
+let mostrarSenhaLogin = false;
 
 let professorEmEdicao = null;
 let turmaEmEdicao = null;
@@ -139,6 +172,17 @@ let filtroProfCadastradas = "Todos";
 
 let filtroBuscaUsuario = "";
 let filtroPerfilUsuario = "Todas";
+
+/* Estado do modal de Usuário */
+let modalUsuarioAberto = false;
+let formNome = "";
+let formEmail = "";
+let formPerfil = "Usuário";
+let formPodeEditarHorarios = false;
+let formUnidadesVinculadas = [];
+let formUsuarioLogin = "";
+let formSenha = "";
+let mostrarSenhaModal = false;
 
 /* Estrutura de menu (igual à screenshot: grupos CADASTROS / HORÁRIOS / ANÁLISE / ADMINISTRAÇÃO) */
 const menuEstrutura = [
@@ -209,6 +253,78 @@ function inicializarDisponibilidadesSeNecessario(chave) {
 }
 
 /* =========================================================================
+   LOGIN
+   ========================================================================= */
+function toggleMostrarSenhaLogin() {
+  mostrarSenhaLogin = !mostrarSenhaLogin;
+  renderizarAplicacao();
+}
+
+function tentarLogin() {
+  const login = loginUsuarioDigitado.trim();
+  const senha = loginSenhaDigitada;
+
+  if (!login || !senha) return alert("Preencha usuário e senha!");
+
+  const encontrado = usuariosGlobais.find(u => (u.usuarioLogin || '').toLowerCase() === login.toLowerCase());
+  if (!encontrado) return alert("Usuário não encontrado.");
+  if (!encontrado.ativo) return alert("Este usuário está inativo. Fale com um administrador.");
+  if (encontrado.senha !== senha) return alert("Senha incorreta.");
+
+  usuarioLogado = encontrado;
+  loginUsuarioDigitado = "";
+  loginSenhaDigitada = "";
+  mostrarSenhaLogin = false;
+
+  if (encontrado.perfil === 'Administrador') {
+    unidadeSelecionada = null;
+  } else {
+    const acessiveis = unidades.filter(u => (encontrado.unidadesVinculadas || []).includes(u.id));
+    unidadeSelecionada = acessiveis.length === 1 ? acessiveis[0] : null;
+  }
+
+  telaAtual = 'Início';
+  renderizarAplicacao();
+}
+
+function sairDoSistema() {
+  if (!confirm("Deseja realmente sair do sistema?")) return;
+  usuarioLogado = null;
+  unidadeSelecionada = null;
+  resetarEstadoDeTela();
+  renderizarAplicacao();
+}
+
+function renderizarLogin() {
+  return `
+    <div class="flex flex-col items-center justify-center w-full min-h-screen p-6 bg-gradient-to-br from-cyan-500 to-blue-700 text-white">
+      <div class="max-w-sm w-full bg-white text-slate-800 rounded-3xl shadow-2xl p-8 space-y-5">
+        <div class="text-center space-y-2">
+          <div class="w-16 h-16 bg-cyan-100 text-cyan-600 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-inner">📅</div>
+          <h1 class="text-xl font-black">MedioTec - Sistema de Horários</h1>
+          <p class="text-xs text-slate-500 font-medium">Entre com seu usuário e senha para acessar</p>
+        </div>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Usuário</label>
+            <input type="text" oninput="loginUsuarioDigitado = this.value;" value="${loginUsuarioDigitado}" placeholder="ex: valdir.rodrigues" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Senha</label>
+            <div class="relative">
+              <input type="${mostrarSenhaLogin ? 'text' : 'password'}" oninput="loginSenhaDigitada = this.value;" value="${loginSenhaDigitada}" placeholder="Sua senha" onkeydown="if(event.key==='Enter'){ tentarLogin(); }" class="w-full border border-slate-200 rounded-xl p-2.5 pr-9 text-sm focus:outline-cyan-500">
+              <button type="button" onclick="toggleMostrarSenhaLogin()" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 text-xs">${mostrarSenhaLogin ? '🙈' : '👁️'}</button>
+            </div>
+          </div>
+          <button onclick="tentarLogin()" class="w-full bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-bold py-3 rounded-xl text-sm shadow-md transition">Entrar</button>
+        </div>
+        <p class="text-[10px] text-slate-400 text-center">Esqueceu sua senha? Fale com um administrador do sistema.</p>
+      </div>
+    </div>
+  `;
+}
+
+/* =========================================================================
    SELEÇÃO DE UNIDADE
    ========================================================================= */
 function selecionarUnidade(idUnidade) {
@@ -231,30 +347,39 @@ function resetarEstadoDeTela() {
   disciplinaEmEdicao = null;
   usuarioEmEdicao = null;
   menuCorAbertoId = null;
+  modalUsuarioAberto = false;
 }
 
 function renderizarSelecaoUnidade() {
+  const unidadesAcessiveis = usuarioLogado.perfil === 'Administrador'
+    ? unidades
+    : unidades.filter(u => (usuarioLogado.unidadesVinculadas || []).includes(u.id));
+
   return `
     <div class="flex flex-col items-center justify-center w-full min-h-screen p-6 bg-gradient-to-br from-cyan-500 to-blue-700 text-white">
-      <div class="max-w-xl w-full bg-white text-slate-800 rounded-3xl shadow-2xl p-8 space-y-6">
+      <div class="max-w-3xl w-full bg-white text-slate-800 rounded-3xl shadow-2xl p-8 space-y-6">
         <div class="text-center space-y-2">
           <div class="w-16 h-16 bg-cyan-100 text-cyan-600 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-inner">🏢</div>
           <h1 class="text-2xl font-black">MedioTec - Sistema de Horários</h1>
-          <p class="text-xs text-slate-500 font-medium">Selecione abaixo a unidade escolar para gerenciar:</p>
+          <p class="text-xs text-slate-500 font-medium">Olá, ${usuarioLogado.nome.split(' ')[0]}! Selecione abaixo a unidade escolar para gerenciar:</p>
         </div>
-        <div class="space-y-3">
-          ${unidades.map(u => `
-            <button onclick="selecionarUnidade(${u.id})" class="w-full flex items-center justify-between p-4 rounded-2xl border-2 border-slate-100 hover:border-cyan-400 hover:bg-cyan-50/50 transition group text-left shadow-sm">
-              <div class="flex items-center gap-3">
-                <span class="text-2xl">${u.icone}</span>
-                <div>
-                  <h4 class="font-extrabold text-slate-800 text-sm group-hover:text-cyan-600 transition">${u.nome}</h4>
-                  <p class="text-[11px] text-slate-400 font-medium">📍 ${u.cidade}</p>
-                </div>
-              </div>
-              <span class="text-xs font-bold text-cyan-600 bg-cyan-50 px-3 py-1.5 rounded-xl group-hover:bg-cyan-500 group-hover:text-white transition">Acessar →</span>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          ${unidadesAcessiveis.map(u => `
+            <button onclick="selecionarUnidade(${u.id})" class="flex flex-col items-center text-center gap-2.5 p-6 rounded-2xl border-2 border-slate-100 hover:border-cyan-400 hover:bg-cyan-50/50 hover:-translate-y-0.5 transition group shadow-sm">
+              <div class="w-14 h-14 bg-cyan-50 group-hover:bg-cyan-500 group-hover:text-white text-cyan-600 rounded-2xl flex items-center justify-center text-3xl transition shadow-inner">${u.icone}</div>
+              <h4 class="font-extrabold text-slate-800 text-sm group-hover:text-cyan-600 transition">${u.nome}</h4>
+              <p class="text-[11px] text-slate-400 font-medium">📍 ${u.cidade}</p>
+              <span class="text-[10px] font-bold ${u.tipo === 'Faculdade' ? 'bg-purple-50 text-purple-600' : 'bg-cyan-50 text-cyan-600'} px-2.5 py-1 rounded-full">${u.tipo}</span>
+              <span class="mt-1 text-xs font-bold text-white bg-cyan-500 group-hover:bg-cyan-600 px-4 py-1.5 rounded-xl transition w-full">Acessar →</span>
             </button>
           `).join('')}
+        </div>
+
+        ${unidadesAcessiveis.length === 0 ? `<p class="text-xs text-slate-400 italic text-center py-4">Nenhuma unidade vinculada a este usuário. Fale com um administrador.</p>` : ''}
+
+        <div class="text-center pt-2 border-t border-slate-100">
+          <button onclick="sairDoSistema()" class="text-xs text-red-500 font-bold hover:underline">🚪 Sair do sistema</button>
         </div>
       </div>
     </div>
@@ -282,7 +407,7 @@ function renderUnidades() {
                   <span class="text-2xl">${u.icone}</span>
                   <div>
                     <h4 class="font-extrabold text-slate-800 text-sm">${u.nome}</h4>
-                    <p class="text-[11px] text-slate-400 font-medium">📍 ${u.cidade}</p>
+                    <p class="text-[11px] text-slate-400 font-medium">📍 ${u.cidade} · ${u.tipo}</p>
                   </div>
                 </div>
                 ${ativa ? `<span class="bg-cyan-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg">Ativa</span>` : ''}
@@ -290,7 +415,7 @@ function renderUnidades() {
               <div class="flex items-center gap-2 text-[10px] text-slate-500 font-semibold">
                 <span class="bg-slate-50 border border-slate-200 px-2 py-1 rounded-lg">👥 ${d.professores.length} professores</span>
                 <span class="bg-slate-50 border border-slate-200 px-2 py-1 rounded-lg">🎓 ${d.turmas.length} turmas</span>
-                <span class="bg-slate-50 border border-slate-200 px-2 py-1 rounded-lg">⚙️ ${(d.usuarios||[]).length} usuários</span>
+                <span class="bg-slate-50 border border-slate-200 px-2 py-1 rounded-lg">⚙️ ${usuariosGlobais.filter(us => us.perfil === 'Administrador' || (us.unidadesVinculadas||[]).includes(u.id)).length} usuários</span>
               </div>
               ${!ativa ? `<button onclick="selecionarUnidade(${u.id})" class="w-full text-center text-cyan-600 border border-cyan-300 hover:bg-cyan-50 rounded-lg py-1.5 font-bold transition text-xs">Selecionar Unidade</button>` : ''}
             </div>
@@ -1226,86 +1351,309 @@ function renderInformacoes() {
   return `
     <div class="space-y-6">
       <div class="flex items-center gap-3">
-        <div class="w-12 h-12 bg-slate-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-md">ℹ️</div>
+        <div class="w-12 h-12 bg-orange-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-md">ℹ️</div>
         <div>
-          <h1 class="text-2xl font-extrabold text-slate-800">Informações</h1>
-          <p class="text-xs text-slate-500 font-medium">Sobre o sistema</p>
+          <h1 class="text-2xl font-extrabold text-slate-800">Informações do Sistema</h1>
+          <p class="text-xs text-slate-500 font-medium">Guia de uso e regras de negócio</p>
         </div>
       </div>
-      <div class="bg-white rounded-2xl border-2 border-slate-100 p-6 shadow-sm space-y-3 text-sm text-slate-600">
-        <p><strong>MedioTec — Sistema de Horários</strong> é uma ferramenta de gestão acadêmica para unidades MedioTec, permitindo cadastro de professores, turmas, cursos e disciplinas, geração automática de grade de horários respeitando a disponibilidade de cada professor, e controle de usuários por unidade.</p>
-        <p>Versão unificada — combina o cadastro de professores/disponibilidade/grade de horários com o suporte a múltiplas unidades e gerenciamento de usuários.</p>
+
+      <div class="bg-white rounded-2xl border-2 border-cyan-100 overflow-hidden shadow-sm">
+        <div class="h-1.5 bg-gradient-to-r from-cyan-400 to-cyan-600"></div>
+        <div class="p-6 space-y-4">
+          <h3 class="font-extrabold text-slate-800 text-base">Horários das Aulas</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <p class="font-bold text-orange-500 text-sm flex items-center gap-1.5">☀️ Turno Manhã</p>
+              <ul class="space-y-1.5 text-sm text-slate-600">
+                ${horariosPorTurno["Manhã"].map((h, i) => `<li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full ${i === 3 ? 'bg-orange-400' : 'bg-cyan-400'} flex-shrink-0"></span> ${i === 3 ? `<strong>Intervalo</strong>` : `Aula ${i < 3 ? i + 1 : i}`}: ${h}</li>`).join('')}
+              </ul>
+            </div>
+            <div class="space-y-2">
+              <p class="font-bold text-orange-500 text-sm flex items-center gap-1.5">🌙 Turno Tarde</p>
+              <ul class="space-y-1.5 text-sm text-slate-600">
+                ${horariosPorTurno["Tarde"].map((h, i) => `<li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full ${i === 3 ? 'bg-orange-400' : 'bg-cyan-400'} flex-shrink-0"></span> ${i === 3 ? `<strong>Intervalo</strong>` : `Aula ${i < 3 ? i + 1 : i}`}: ${h}</li>`).join('')}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border-2 border-orange-100 overflow-hidden shadow-sm">
+        <div class="h-1.5 bg-gradient-to-r from-orange-400 to-orange-600"></div>
+        <div class="p-6 space-y-4">
+          <h3 class="font-extrabold text-slate-800 text-base">Regras de Alocação</h3>
+          <div class="space-y-3.5 text-sm">
+            <div class="flex gap-2.5">
+              <span class="text-cyan-600 font-bold mt-0.5">✓</span>
+              <div><strong class="text-slate-800">Carga de Aulas</strong><p class="text-slate-500 text-[13px]">Máximo de 40 aulas por mês e 9 aulas por dia para cada professor (sem limite semanal).</p></div>
+            </div>
+            <div class="flex gap-2.5">
+              <span class="text-cyan-600 font-bold mt-0.5">✓</span>
+              <div><strong class="text-slate-800">Sem Janelas</strong><p class="text-slate-500 text-[13px]">O sistema evita criar janelas (intervalos vazios) entre as aulas do professor.</p></div>
+            </div>
+            <div class="flex gap-2.5">
+              <span class="text-cyan-600 font-bold mt-0.5">✓</span>
+              <div><strong class="text-slate-800">Transição entre Turnos no Mesmo Dia</strong><p class="text-slate-500 text-[13px]">Professor que termina na última aula da manhã (${horariosPorTurno["Manhã"][horariosPorTurno["Manhã"].length - 1].split('-')[1]}) só pode começar na segunda aula da tarde (${horariosPorTurno["Tarde"][1]}) no mesmo dia.</p></div>
+            </div>
+            <div class="flex gap-2.5">
+              <span class="text-cyan-600 font-bold mt-0.5">✓</span>
+              <div><strong class="text-slate-800">Disponibilidade</strong><p class="text-slate-500 text-[13px]">Respeita a disponibilidade de dias, turnos e horários específicos configurados para cada professor.</p></div>
+            </div>
+            <div class="flex gap-2.5">
+              <span class="text-cyan-600 font-bold mt-0.5">✓</span>
+              <div><strong class="text-slate-800">Horários Específicos</strong><p class="text-slate-500 text-[13px]">O professor pode marcar horários específicos como indisponíveis em cada dia da semana.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border-2 border-cyan-100 overflow-hidden shadow-sm">
+        <div class="h-1.5 bg-gradient-to-r from-cyan-400 to-orange-400"></div>
+        <div class="p-6 space-y-3">
+          <h3 class="font-extrabold text-slate-800 text-base">Tipos de Curso</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+              <p class="font-bold text-slate-700">🎓 MedioTec</p>
+              <p class="text-slate-500 text-[13px] mt-0.5">Ensino médio integrado com formação profissional. A geração automática já está disponível para esse tipo de curso.</p>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+              <p class="font-bold text-slate-700">🏛️ Faculdade</p>
+              <p class="text-slate-500 text-[13px] mt-0.5">Cursos de graduação. Regras específicas de geração para este tipo de curso serão adicionadas em breve.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   `;
 }
 
 /* =========================================================================
-   TELA: USUÁRIOS
+   TELA: USUÁRIOS (lista global + modal de edição)
    ========================================================================= */
+function abrirModalNovoUsuario() {
+  usuarioEmEdicao = null;
+  formNome = "";
+  formEmail = "";
+  formPerfil = "Usuário";
+  formPodeEditarHorarios = false;
+  formUnidadesVinculadas = [];
+  formUsuarioLogin = "";
+  formSenha = "";
+  mostrarSenhaModal = false;
+  modalUsuarioAberto = true;
+  navegar('Usuários');
+}
+
+function abrirModalEditarUsuario(id) {
+  const u = usuariosGlobais.find(item => item.id === id);
+  if (!u) return;
+  usuarioEmEdicao = u;
+  formNome = u.nome;
+  formEmail = u.email;
+  formPerfil = u.perfil;
+  formPodeEditarHorarios = !!u.podeEditarHorarios;
+  formUnidadesVinculadas = u.unidadesVinculadas ? [...u.unidadesVinculadas] : [];
+  formUsuarioLogin = u.usuarioLogin || "";
+  formSenha = "";
+  mostrarSenhaModal = false;
+  modalUsuarioAberto = true;
+  navegar('Usuários');
+}
+
+function toggleMostrarSenhaModal() {
+  mostrarSenhaModal = !mostrarSenhaModal;
+  navegar('Usuários');
+}
+
+function loginJaExiste(login, idExcluir) {
+  const alvo = login.trim().toLowerCase();
+  return usuariosGlobais.some(u => u.id !== idExcluir && (u.usuarioLogin || '').toLowerCase() === alvo);
+}
+
+function fecharModalUsuario() {
+  modalUsuarioAberto = false;
+  usuarioEmEdicao = null;
+  navegar('Usuários');
+}
+
+function toggleEditarHorarios() {
+  formPodeEditarHorarios = !formPodeEditarHorarios;
+  navegar('Usuários');
+}
+
+function toggleUnidadeVinculada(idUnidade) {
+  const idx = formUnidadesVinculadas.indexOf(idUnidade);
+  if (idx >= 0) formUnidadesVinculadas.splice(idx, 1);
+  else formUnidadesVinculadas.push(idUnidade);
+  navegar('Usuários');
+}
+
 function salvarUsuario() {
-  const d = dados();
-  const nome = document.getElementById('user-nome').value.trim();
-  const email = document.getElementById('user-email').value.trim();
-  const perfil = document.getElementById('user-perfil').value;
+  const nome = formNome.trim();
+  const email = formEmail.trim();
+  const login = formUsuarioLogin.trim();
+  const senha = formSenha;
 
   if (!nome || !email) return alert("Preencha todos os campos obrigatórios do usuário!");
+  if (!login) return alert("Informe um usuário de login para o acesso ao sistema!");
+  if (!usuarioEmEdicao && !senha) return alert("Crie uma senha de acesso para o novo usuário!");
+  if (loginJaExiste(login, usuarioEmEdicao ? usuarioEmEdicao.id : null)) {
+    return alert("Já existe um usuário com esse login. Escolha outro.");
+  }
 
   if (usuarioEmEdicao) {
     usuarioEmEdicao.nome = nome;
     usuarioEmEdicao.email = email;
-    usuarioEmEdicao.perfil = perfil;
-    usuarioEmEdicao = null;
+    usuarioEmEdicao.perfil = formPerfil;
+    usuarioEmEdicao.podeEditarHorarios = formPodeEditarHorarios;
+    usuarioEmEdicao.unidadesVinculadas = [...formUnidadesVinculadas];
+    usuarioEmEdicao.usuarioLogin = login;
+    if (senha) usuarioEmEdicao.senha = senha;
   } else {
-    if (!d.usuarios) d.usuarios = [];
-    d.usuarios.push({
+    usuariosGlobais.push({
       id: Date.now(),
       nome,
       email,
-      perfil,
+      perfil: formPerfil,
       ativo: true,
-      dataCadastro: new Date().toISOString().slice(0, 10)
+      dataCadastro: new Date().toISOString().slice(0, 10),
+      podeEditarHorarios: formPodeEditarHorarios,
+      unidadesVinculadas: [...formUnidadesVinculadas],
+      usuarioLogin: login,
+      senha: senha
     });
   }
+  modalUsuarioAberto = false;
+  usuarioEmEdicao = null;
   navegar('Usuários');
 }
-
-function editarUsuario(id) {
-  const d = dados();
-  usuarioEmEdicao = d.usuarios.find(item => item.id === id);
-  navegar('Usuários');
-}
-
-function cancelarEdicaoUsuario() { usuarioEmEdicao = null; navegar('Usuários'); }
 
 function removerUsuario(id) {
-  const d = dados();
-  const alvo = d.usuarios.find(u => u.id === id);
+  const alvo = usuariosGlobais.find(u => u.id === id);
   if (alvo && alvo.protegido) { alert("Este usuário administrador não pode ser removido."); return; }
   if (!confirm("Remover este usuário?")) return;
-  d.usuarios = d.usuarios.filter(item => item.id !== id);
-  if (usuarioEmEdicao && usuarioEmEdicao.id === id) usuarioEmEdicao = null;
+  usuariosGlobais = usuariosGlobais.filter(item => item.id !== id);
   navegar('Usuários');
+}
+
+function renderSwitch(ativo, onclickAttr, disabled) {
+  const trackColor = disabled ? 'bg-slate-200' : (ativo ? 'bg-cyan-500' : 'bg-slate-300');
+  const cursorClasse = disabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer';
+  const posicaoThumb = ativo ? 'translate-x-4' : 'translate-x-0';
+  const clique = disabled ? '' : `onclick="${onclickAttr}"`;
+  return `
+    <button type="button" ${clique} class="w-9 h-5 rounded-full ${trackColor} ${cursorClasse} relative transition flex-shrink-0">
+      <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${posicaoThumb}"></span>
+    </button>
+  `;
+}
+
+function renderModalUsuario() {
+  if (!modalUsuarioAberto) return '';
+  const isAdmin = formPerfil === 'Administrador';
+
+  return `
+    <div class="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4" onmousedown="if(event.target===this) fecharModalUsuario();">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto" onmousedown="event.stopPropagation();">
+        <div class="flex items-center justify-between p-5 border-b border-slate-100">
+          <div>
+            <h3 class="font-bold text-slate-800 text-base">${usuarioEmEdicao ? 'Editar Usuário' : 'Novo Usuário'}</h3>
+            ${usuarioEmEdicao ? `<p class="text-xs text-slate-400 mt-0.5">Editando: ${usuarioEmEdicao.email}</p>` : ''}
+          </div>
+          <button onclick="fecharModalUsuario()" class="text-slate-400 hover:text-slate-600 text-lg leading-none px-1">✕</button>
+        </div>
+
+        <div class="p-5 space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Nome Completo</label>
+            <input type="text" oninput="formNome = this.value;" value="${formNome}" placeholder="Ex: Maria Souza" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">E-mail</label>
+            <input type="email" oninput="formEmail = this.value;" value="${formEmail}" placeholder="exemplo@pe.senac.br" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500">
+          </div>
+
+          <div class="pt-1 border-t border-slate-100">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-3 mb-2">🔑 Acesso ao Sistema</p>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Usuário (login)</label>
+            <input type="text" oninput="formUsuarioLogin = this.value;" value="${formUsuarioLogin}" placeholder="ex: maria.souza" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Senha</label>
+            <div class="relative">
+              <input type="${mostrarSenhaModal ? 'text' : 'password'}" oninput="formSenha = this.value;" value="${formSenha}" placeholder="${usuarioEmEdicao ? 'Deixe em branco para manter a senha atual' : 'Crie uma senha de acesso'}" class="w-full border border-slate-200 rounded-xl p-2.5 pr-9 text-sm focus:outline-cyan-500">
+              <button type="button" onclick="toggleMostrarSenhaModal()" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 text-xs">${mostrarSenhaModal ? '🙈' : '👁️'}</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Função</label>
+            <select onchange="formPerfil = this.value; navegar('Usuários');" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500 text-slate-700">
+              <option value="Administrador" ${isAdmin ? 'selected' : ''}>Administrador</option>
+              <option value="Usuário" ${!isAdmin ? 'selected' : ''}>Usuário</option>
+            </select>
+          </div>
+
+          <div class="flex items-center justify-between bg-cyan-50 border border-cyan-100 rounded-xl p-3 gap-3">
+            <div class="flex items-start gap-2">
+              <span class="text-cyan-600 mt-0.5">✏️</span>
+              <div>
+                <p class="text-xs font-bold text-slate-700">Pode Editar Horários</p>
+                <p class="text-[11px] text-slate-500">Permitir edição mesmo sem ser admin</p>
+              </div>
+            </div>
+            ${renderSwitch(formPodeEditarHorarios, 'toggleEditarHorarios()', isAdmin)}
+          </div>
+
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2.5">
+            <div class="flex items-start gap-2">
+              <span class="text-amber-600 mt-0.5">🏢</span>
+              <div>
+                <p class="text-xs font-bold text-slate-700">Vincular a Unidades</p>
+                <p class="text-[11px] text-slate-500">Selecione as unidades que este usuário pode acessar. O perfil define o nível de acesso dentro de cada unidade.</p>
+              </div>
+            </div>
+            <div class="max-h-40 overflow-y-auto space-y-1.5 pr-1">
+              ${unidades.map(u => `
+                <div class="flex items-center justify-between bg-white border border-slate-200 rounded-lg p-2 gap-2 ${isAdmin ? 'opacity-60' : ''}">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="text-base flex-shrink-0">${u.icone}</span>
+                    <div class="min-w-0">
+                      <p class="text-xs font-bold text-slate-700 truncate">${u.nome}</p>
+                      <p class="text-[10px] text-slate-400">${u.tipo}</p>
+                    </div>
+                  </div>
+                  ${renderSwitch(formUnidadesVinculadas.includes(u.id), `toggleUnidadeVinculada(${u.id})`, isAdmin)}
+                </div>
+              `).join('')}
+            </div>
+            <p class="text-[10px] text-amber-700 flex items-start gap-1"><span>○</span><span>Administradores têm acesso a todas as unidades automaticamente.</span></p>
+          </div>
+        </div>
+
+        <div class="flex gap-3 p-5 border-t border-slate-100">
+          <button onclick="salvarUsuario()" class="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition flex items-center justify-center gap-1.5">✓ Salvar</button>
+          <button onclick="fecharModalUsuario()" class="flex-1 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-1.5">✕ Cancelar</button>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 function renderUsuarios() {
-  const d = dados();
-  const listaUsuarios = d.usuarios || [];
+  const total = usuariosGlobais.length;
+  const ativos = usuariosGlobais.filter(u => u.ativo).length;
+  const admins = usuariosGlobais.filter(u => u.perfil === 'Administrador').length;
 
-  const total = listaUsuarios.length;
-  const ativos = listaUsuarios.filter(u => u.ativo).length;
-  const admins = listaUsuarios.filter(u => u.perfil === 'Administrador').length;
-
-  const usuariosFiltrados = listaUsuarios.filter(u => {
+  const usuariosFiltrados = usuariosGlobais.filter(u => {
     const termo = filtroBuscaUsuario.toLowerCase();
     const matchBusca = u.nome.toLowerCase().includes(termo) || u.email.toLowerCase().includes(termo);
     const matchPerfil = filtroPerfilUsuario === "Todas" || u.perfil === filtroPerfilUsuario;
     return matchBusca && matchPerfil;
   });
-
-  const nomeVal = usuarioEmEdicao ? usuarioEmEdicao.nome : '';
-  const emailVal = usuarioEmEdicao ? usuarioEmEdicao.email : '';
-  const perfilVal = usuarioEmEdicao ? usuarioEmEdicao.perfil : 'Usuário';
 
   const linhasUsuarios = usuariosFiltrados.map(u => {
     const inicial = u.nome.trim().charAt(0).toUpperCase();
@@ -1321,14 +1669,17 @@ function renderUsuarios() {
           <span class="font-bold text-slate-800 text-sm truncate">${u.nome}</span>
         </div>
         <div class="flex items-center gap-1.5 text-xs text-slate-500 min-w-0">
-          <span>✉️</span><span class="truncate">${u.email}</span>
+          <div class="min-w-0">
+            <p class="flex items-center gap-1.5 truncate"><span>✉️</span><span class="truncate">${u.email}</span></p>
+            ${u.usuarioLogin ? `<p class="text-[10px] text-slate-400 truncate mt-0.5">🔑 ${u.usuarioLogin}</p>` : ''}
+          </div>
         </div>
         <div>${badge}</div>
         <div class="flex items-center gap-1.5 text-xs text-slate-500">
           <span>📅</span><span>${formatarDataBR(u.dataCadastro)}</span>
         </div>
         <div class="flex items-center gap-1.5">
-          <button onclick="editarUsuario(${u.id})" class="p-1.5 text-cyan-600 hover:bg-cyan-50 rounded-lg transition">✏️</button>
+          <button onclick="abrirModalEditarUsuario(${u.id})" class="p-1.5 text-cyan-600 hover:bg-cyan-50 rounded-lg transition">✏️</button>
           ${u.protegido ? '' : `<button onclick="removerUsuario(${u.id})" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition">🗑️</button>`}
         </div>
       </div>
@@ -1338,82 +1689,57 @@ function renderUsuarios() {
   return `
     <div class="space-y-6">
       <div class="flex items-center gap-3">
-        <div class="w-12 h-12 bg-cyan-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-md">⚙️</div>
+        <div class="w-12 h-12 bg-slate-700 text-white rounded-2xl flex items-center justify-center text-2xl shadow-md">👥</div>
         <div>
-          <h1 class="text-2xl font-extrabold text-slate-800">Usuários</h1>
-          <p class="text-xs text-slate-500 font-medium">Controle de acessos — ${unidadeSelecionada.nome}</p>
+          <h1 class="text-2xl font-extrabold text-slate-800">Gestão de Usuários</h1>
+          <p class="text-xs text-slate-500 font-medium">Visualize e gerencie os usuários</p>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div class="bg-white rounded-2xl border-2 border-cyan-200 p-5 shadow-sm">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
           <div class="flex items-center gap-2 text-slate-500 text-xs font-bold mb-2">👥 Total de Usuários</div>
-          <p class="text-3xl font-black text-orange-500">${total}</p>
+          <p class="text-3xl font-black text-cyan-600">${total}</p>
           <p class="text-[11px] text-slate-400 mt-1">Usuários cadastrados no sistema</p>
         </div>
-        <div class="bg-white rounded-2xl border-2 border-cyan-200 p-5 shadow-sm">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
           <div class="flex items-center gap-2 text-slate-500 text-xs font-bold mb-2">👤 Usuários Ativos</div>
-          <p class="text-3xl font-black text-orange-500">${ativos}</p>
+          <p class="text-3xl font-black text-cyan-600">${ativos}</p>
           <p class="text-[11px] text-slate-400 mt-1">Com permissões de visualização</p>
         </div>
-        <div class="bg-white rounded-2xl border-2 border-cyan-200 p-5 shadow-sm">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
           <div class="flex items-center gap-2 text-slate-500 text-xs font-bold mb-2">🛡️ Administradores</div>
-          <p class="text-3xl font-black text-orange-500">${admins}</p>
+          <p class="text-3xl font-black text-cyan-600">${admins}</p>
           <p class="text-[11px] text-slate-400 mt-1">Com permissões completas</p>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <div class="bg-white rounded-2xl border-2 border-cyan-100 p-6 shadow-sm space-y-4">
-          <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-            <h3 class="font-bold text-slate-700 text-sm">${usuarioEmEdicao ? '✏️ Editando Usuário' : 'Novo Usuário'}</h3>
-            ${usuarioEmEdicao ? `<button onclick="cancelarEdicaoUsuario()" class="text-xs text-red-500 font-bold hover:underline">✕ Cancelar</button>` : ''}
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Nome Completo</label>
-            <input type="text" id="user-nome" value="${nomeVal}" placeholder="Ex: Maria Souza" class="w-full border border-slate-200 rounded-xl p-2.5 text-xs focus:outline-cyan-500">
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">E-mail</label>
-            <input type="email" id="user-email" value="${emailVal}" placeholder="exemplo@pe.senac.br" class="w-full border border-slate-200 rounded-xl p-2.5 text-xs focus:outline-cyan-500">
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Perfil de Acesso</label>
-            <select id="user-perfil" class="w-full border border-slate-200 rounded-xl p-2.5 text-xs focus:outline-cyan-500 text-slate-600">
-              <option value="Administrador" ${perfilVal === 'Administrador' ? 'selected' : ''}>👑 Administrador (Acesso Total)</option>
-              <option value="Usuário" ${perfilVal === 'Usuário' ? 'selected' : ''}>👤 Usuário (Visualização)</option>
-            </select>
-          </div>
-          <button onclick="salvarUsuario()" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 rounded-xl text-xs shadow-md transition flex items-center justify-center gap-1.5">
-            <span>💾</span> <span>${usuarioEmEdicao ? 'Salvar Alterações' : 'Cadastrar Usuário'}</span>
-          </button>
+      <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
+        <div class="relative flex-1">
+          <span class="absolute left-3 top-2.5 text-slate-400 text-xs">🔍</span>
+          <input type="text" oninput="filtroBuscaUsuario = this.value; navegar('Usuários');" value="${filtroBuscaUsuario}" placeholder="Buscar..." class="w-full pl-8 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-cyan-500">
         </div>
+        <select onchange="filtroPerfilUsuario = this.value; navegar('Usuários');" class="bg-white border border-slate-200 rounded-xl py-2.5 px-3 text-xs font-semibold text-slate-600 focus:outline-cyan-500">
+          <option value="Todas" ${filtroPerfilUsuario === 'Todas' ? 'selected' : ''}>Todas</option>
+          <option value="Administrador" ${filtroPerfilUsuario === 'Administrador' ? 'selected' : ''}>Administrador</option>
+          <option value="Usuário" ${filtroPerfilUsuario === 'Usuário' ? 'selected' : ''}>Usuário</option>
+        </select>
+        <button onclick="abrirModalNovoUsuario()" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-md transition flex items-center justify-center gap-1.5 whitespace-nowrap">
+          <span>+</span> <span>Novo Usuário</span>
+        </button>
+      </div>
 
-        <div class="lg:col-span-2 space-y-4">
-          <div class="space-y-2.5">
-            <div class="relative">
-              <span class="absolute left-3 top-2.5 text-slate-400 text-xs">🔍</span>
-              <input type="text" oninput="filtroBuscaUsuario = this.value; navegar('Usuários');" value="${filtroBuscaUsuario}" placeholder="Buscar..." class="w-full pl-8 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-cyan-500">
-            </div>
-            <select onchange="filtroPerfilUsuario = this.value; navegar('Usuários');" class="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3 text-xs font-semibold text-slate-600 focus:outline-cyan-500">
-              <option value="Todas" ${filtroPerfilUsuario === 'Todas' ? 'selected' : ''}>Todas</option>
-              <option value="Administrador" ${filtroPerfilUsuario === 'Administrador' ? 'selected' : ''}>Administrador</option>
-              <option value="Usuário" ${filtroPerfilUsuario === 'Usuário' ? 'selected' : ''}>Usuário</option>
-            </select>
-          </div>
+      <div class="h-1.5 rounded-full bg-gradient-to-r from-cyan-400 via-cyan-500 to-orange-400"></div>
 
-          <div class="h-1.5 rounded-full bg-gradient-to-r from-cyan-400 via-cyan-500 to-orange-400"></div>
-
-          <div class="bg-white rounded-2xl border-2 border-cyan-100 p-5 shadow-sm">
-            <h3 class="font-bold text-slate-700 text-sm mb-1 flex items-center gap-2">👥 Todos os Usuários (${usuariosFiltrados.length})</h3>
-            <div class="grid grid-cols-[2.2fr,2.2fr,1fr,1.1fr,0.9fr] gap-3 pt-3 pb-2 border-b-2 border-slate-100 text-xs font-bold text-slate-600">
-              <span>Nome</span><span>Email</span><span>Função</span><span>Data</span><span>Ações</span>
-            </div>
-            <div>${linhasUsuarios || `<p class="text-xs text-slate-400 italic text-center py-6">Nenhum usuário encontrado.</p>`}</div>
-          </div>
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <h3 class="font-bold text-slate-700 text-sm mb-1 flex items-center gap-2">👥 Todos os Usuários (${usuariosFiltrados.length})</h3>
+        <div class="grid grid-cols-[2.2fr,2.2fr,1fr,1.1fr,0.9fr] gap-3 pt-3 pb-2 border-b-2 border-slate-100 text-xs font-bold text-slate-600">
+          <span>Nome</span><span>Email</span><span>Função</span><span>Data</span><span>Ações</span>
         </div>
+        <div>${linhasUsuarios || `<p class="text-xs text-slate-400 italic text-center py-6">Nenhum usuário encontrado.</p>`}</div>
       </div>
     </div>
+    ${renderModalUsuario()}
   `;
 }
 
@@ -1441,6 +1767,11 @@ function montarMenuHTML() {
 
 function renderizarAplicacao() {
   const container = document.getElementById('app-container');
+
+  if (!usuarioLogado) {
+    container.innerHTML = renderizarLogin();
+    return;
+  }
 
   if (!unidadeSelecionada) {
     container.innerHTML = renderizarSelecaoUnidade();
@@ -1478,10 +1809,10 @@ function renderizarAplicacao() {
           <span class="text-lg">👤</span>
           <div>
             <p class="text-slate-500 text-[10px]">Logado como</p>
-            <p class="font-semibold text-slate-800 truncate">Valdir Rodrigues</p>
+            <p class="font-semibold text-slate-800 truncate">${usuarioLogado.nome}</p>
           </div>
         </div>
-        <button onclick="alert('Saindo...')" class="w-full text-sm font-semibold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-xl py-2 shadow-md transition">
+        <button onclick="sairDoSistema()" class="w-full text-sm font-semibold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-xl py-2 shadow-md transition">
           🚪 Sair
         </button>
       </div>

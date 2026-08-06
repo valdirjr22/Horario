@@ -14,10 +14,10 @@
    DADOS
    ========================================================================= */
 let unidades = [
-  { id: 1, nome: "Senac Paulista - MedioTec", icone: "🎓", cidade: "Paulista - PE", tipo: "MedioTec" },
-  { id: 2, nome: "Senac Recife - MedioTec", icone: "🏫", cidade: "Recife - PE", tipo: "MedioTec" },
-  { id: 3, nome: "Senac Olinda - MedioTec", icone: "🏢", cidade: "Olinda - PE", tipo: "MedioTec" },
-  { id: 4, nome: "Faculdade Senac Recife", icone: "🏛️", cidade: "Recife - PE", tipo: "Faculdade" }
+  { id: 1, nome: "Senac Paulista - MedioTec", icone: "🎓", cidade: "Paulista - PE", tipo: "MedioTec", endereco: "Rua Oitenta e Dois, N: 30 - Paulista/PE", aulasPorTurno: 7, nota: "Unidade principal do MedioTec Senac Paulista", cor: "cyan" },
+  { id: 2, nome: "Senac Recife - MedioTec", icone: "🏫", cidade: "Recife - PE", tipo: "MedioTec", endereco: "", aulasPorTurno: 7, nota: "", cor: "amber" },
+  { id: 3, nome: "Senac Olinda - MedioTec", icone: "🏢", cidade: "Olinda - PE", tipo: "MedioTec", endereco: "", aulasPorTurno: 7, nota: "", cor: "emerald" },
+  { id: 4, nome: "Faculdade Senac Recife", icone: "🏛️", cidade: "Recife - PE", tipo: "Faculdade", endereco: "", aulasPorTurno: 5, nota: "", cor: "red" }
 ];
 
 const opcoesCoresProf = [
@@ -49,6 +49,17 @@ function corLegendaProfessor(nomeProf) {
 }
 
 const iconesDisponiveis = ["🎓", "💻", "🎮", "⚙️", "📊", "📱", "🍎", "📐", "⛵", "🎨"];
+const iconesUnidade = ["🎓", "🏫", "🏢", "🏛️", "🏭", "🎨", "⚕️", "💻"];
+
+const paletaUnidade = {
+  cyan:    { faixa: 'bg-cyan-500',    iconBg: 'bg-cyan-50',    iconText: 'text-cyan-500',    badgeBg: 'bg-cyan-50',    badgeText: 'text-cyan-700' },
+  amber:   { faixa: 'bg-amber-400',   iconBg: 'bg-amber-50',   iconText: 'text-amber-500',   badgeBg: 'bg-amber-50',   badgeText: 'text-amber-700' },
+  red:     { faixa: 'bg-red-500',     iconBg: 'bg-red-50',     iconText: 'text-red-500',     badgeBg: 'bg-red-50',     badgeText: 'text-red-700' },
+  emerald: { faixa: 'bg-emerald-500', iconBg: 'bg-emerald-50', iconText: 'text-emerald-500', badgeBg: 'bg-emerald-50', badgeText: 'text-emerald-700' },
+  purple:  { faixa: 'bg-purple-500',  iconBg: 'bg-purple-50',  iconText: 'text-purple-500',  badgeBg: 'bg-purple-50',  badgeText: 'text-purple-700' },
+  pink:    { faixa: 'bg-pink-500',    iconBg: 'bg-pink-50',    iconText: 'text-pink-500',    badgeBg: 'bg-pink-50',    badgeText: 'text-pink-700' }
+};
+const ordemCoresUnidade = ['cyan', 'amber', 'red', 'emerald', 'purple', 'pink'];
 
 const horariosPorTurno = {
   "Manhã": ["07:00-07:50", "07:50-08:40", "08:40-09:30", "10:00-10:50", "10:50-11:40", "11:40-12:30", "12:30-13:20"],
@@ -69,10 +80,10 @@ let dadosPorUnidade = {
       { id: 6, nome: "ÍTALO NUNES",    maxMes: 40, maxDia: 9, turnos: ["Manhã", "Tarde"], corId: 'rosa' }
     ],
     turmas: [
-      { id: 1, nome: "3 ANO B", turno: "Manhã", tipoCurso: "MedioTec" },
-      { id: 2, nome: "3 ANO A", turno: "Manhã", tipoCurso: "MedioTec" },
-      { id: 3, nome: "1 ANO B", turno: "Manhã", tipoCurso: "MedioTec" },
-      { id: 4, nome: "2 ANO C", turno: "Tarde", tipoCurso: "MedioTec" }
+      { id: 1, nome: "3 ANO B", turno: "Manhã", tipoCurso: "MedioTec", sala: "Sala Nova / 1º Andar" },
+      { id: 2, nome: "3 ANO A", turno: "Manhã", tipoCurso: "MedioTec", sala: "Sala Nova / 1º Andar" },
+      { id: 3, nome: "1 ANO B", turno: "Manhã", tipoCurso: "MedioTec", sala: "" },
+      { id: 4, nome: "2 ANO C", turno: "Tarde", tipoCurso: "MedioTec", sala: "" }
     ],
     cursos: [
       { id: 1, nome: "Mediotec Desenvolvimento de Jogos Digitais", descricao: "", icone: "🎮", cor: "#06b6d4" },
@@ -96,7 +107,7 @@ let dadosPorUnidade = {
   },
   2: {
     professores: [{ id: 101, nome: "PROFESSOR RECIFE 1", maxMes: 40, maxDia: 9, turnos: ["Manhã"], corId: 'ciano' }],
-    turmas: [{ id: 101, nome: "1 ANO RECIFE", turno: "Manhã", tipoCurso: "MedioTec" }],
+    turmas: [{ id: 101, nome: "1 ANO RECIFE", turno: "Manhã", tipoCurso: "MedioTec", sala: "" }],
     cursos: [{ id: 101, nome: "Mediotec Enfermagem - Recife", descricao: "", icone: "🍎", cor: "#10b981" }],
     disciplinas: [{ id: 101, nome: "Anatomia", tipo: "Outras", professor: "PROFESSOR RECIFE 1", turma: "1 ANO RECIFE", aulasSemana: 4 }],
     indisponibilidadesProf: {},
@@ -105,7 +116,7 @@ let dadosPorUnidade = {
   },
   3: {
     professores: [{ id: 201, nome: "PROFESSOR OLINDA 1", maxMes: 40, maxDia: 9, turnos: ["Tarde"], corId: 'amarelo' }],
-    turmas: [{ id: 201, nome: "1 ANO OLINDA", turno: "Tarde", tipoCurso: "MedioTec" }],
+    turmas: [{ id: 201, nome: "1 ANO OLINDA", turno: "Tarde", tipoCurso: "MedioTec", sala: "" }],
     cursos: [{ id: 201, nome: "Mediotec Administração - Olinda", descricao: "", icone: "📊", cor: "#f97316" }],
     disciplinas: [{ id: 201, nome: "Gestão", tipo: "Outras", professor: "PROFESSOR OLINDA 1", turma: "1 ANO OLINDA", aulasSemana: 3 }],
     indisponibilidadesProf: {},
@@ -173,6 +184,31 @@ let filtroProfCadastradas = "Todos";
 let filtroBuscaUsuario = "";
 let filtroPerfilUsuario = "Todas";
 
+/* Estado da tela Grade de Horários */
+let abaGrade = "visualizar";
+let subAbaGradeView = "turma";
+let turmaParaGerar = "";
+let filtroTurmaGradeView = "Todas";
+
+let modoEdicaoGrade = false;
+let turmaEmEdicaoGrade = null;
+let gradeEmEdicaoTemp = null;
+let gradeEmEdicaoOriginal = null;
+let formSalaEdicao = "";
+let salaOriginalEdicao = "";
+
+/* Estado do modal de Unidade */
+let modalUnidadeAberto = false;
+let unidadeEmEdicao = null;
+let formNomeUnidade = "";
+let formTipoUnidade = "MedioTec";
+let formIconeUnidade = "🎓";
+let formCidadeUnidade = "";
+let formEnderecoUnidade = "";
+let formAulasPorTurnoUnidade = 7;
+let formNotaUnidade = "";
+let formCorUnidade = "cyan";
+
 /* Estado do modal de Usuário */
 let modalUsuarioAberto = false;
 let formNome = "";
@@ -231,6 +267,27 @@ function corAvatar(nome) {
   let soma = 0;
   for (let i = 0; i < nome.length; i++) soma += nome.charCodeAt(i);
   return coresAvatar[soma % coresAvatar.length];
+}
+
+const paletaLegendaProf = [
+  { bg: 'bg-cyan-50', text: 'text-cyan-700', dot: 'bg-cyan-500' },
+  { bg: 'bg-purple-50', text: 'text-purple-700', dot: 'bg-purple-500' },
+  { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
+  { bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500' },
+  { bg: 'bg-pink-50', text: 'text-pink-700', dot: 'bg-pink-500' },
+  { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500' },
+  { bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-500' },
+  { bg: 'bg-teal-50', text: 'text-teal-700', dot: 'bg-teal-500' },
+  { bg: 'bg-rose-50', text: 'text-rose-700', dot: 'bg-rose-500' },
+  { bg: 'bg-indigo-50', text: 'text-indigo-700', dot: 'bg-indigo-500' },
+  { bg: 'bg-lime-50', text: 'text-lime-700', dot: 'bg-lime-500' },
+  { bg: 'bg-fuchsia-50', text: 'text-fuchsia-700', dot: 'bg-fuchsia-500' }
+];
+
+function corLegendaProfessor(nome) {
+  let soma = 0;
+  for (let i = 0; i < nome.length; i++) soma += nome.charCodeAt(i);
+  return paletaLegendaProf[soma % paletaLegendaProf.length];
 }
 
 function getChaveProf() {
@@ -348,6 +405,10 @@ function resetarEstadoDeTela() {
   usuarioEmEdicao = null;
   menuCorAbertoId = null;
   modalUsuarioAberto = false;
+  modalUnidadeAberto = false;
+  modoEdicaoGrade = false;
+  turmaEmEdicaoGrade = null;
+  abaGrade = "visualizar";
 }
 
 function renderizarSelecaoUnidade() {
@@ -386,43 +447,225 @@ function renderizarSelecaoUnidade() {
   `;
 }
 
+function abrirModalNovaUnidade() {
+  unidadeEmEdicao = null;
+  formNomeUnidade = "";
+  formTipoUnidade = "MedioTec";
+  formIconeUnidade = "🎓";
+  formCidadeUnidade = "";
+  formEnderecoUnidade = "";
+  formAulasPorTurnoUnidade = 7;
+  formNotaUnidade = "";
+  formCorUnidade = ordemCoresUnidade[unidades.length % ordemCoresUnidade.length];
+  modalUnidadeAberto = true;
+  navegar('Unidades');
+}
+
+function abrirModalEditarUnidade(id) {
+  const u = unidades.find(item => item.id === id);
+  if (!u) return;
+  unidadeEmEdicao = u;
+  formNomeUnidade = u.nome;
+  formTipoUnidade = u.tipo;
+  formIconeUnidade = u.icone;
+  formCidadeUnidade = u.cidade;
+  formEnderecoUnidade = u.endereco || "";
+  formAulasPorTurnoUnidade = u.aulasPorTurno || 7;
+  formNotaUnidade = u.nota || "";
+  formCorUnidade = u.cor || "cyan";
+  modalUnidadeAberto = true;
+  navegar('Unidades');
+}
+
+function fecharModalUnidade() {
+  modalUnidadeAberto = false;
+  unidadeEmEdicao = null;
+  navegar('Unidades');
+}
+
+function selecionarIconeUnidade(ic) { formIconeUnidade = ic; navegar('Unidades'); }
+function selecionarCorUnidade(cor) { formCorUnidade = cor; navegar('Unidades'); }
+
+function salvarUnidade() {
+  const nome = formNomeUnidade.trim();
+  const cidade = formCidadeUnidade.trim();
+  if (!nome || !cidade) return alert("Preencha ao menos o nome e a cidade da unidade!");
+
+  if (unidadeEmEdicao) {
+    unidadeEmEdicao.nome = nome;
+    unidadeEmEdicao.tipo = formTipoUnidade;
+    unidadeEmEdicao.icone = formIconeUnidade;
+    unidadeEmEdicao.cidade = cidade;
+    unidadeEmEdicao.endereco = formEnderecoUnidade.trim();
+    unidadeEmEdicao.aulasPorTurno = parseInt(formAulasPorTurnoUnidade) || 7;
+    unidadeEmEdicao.nota = formNotaUnidade.trim();
+    unidadeEmEdicao.cor = formCorUnidade;
+  } else {
+    const novoId = unidades.length > 0 ? Math.max(...unidades.map(u => u.id)) + 1 : 1;
+    unidades.push({
+      id: novoId,
+      nome,
+      tipo: formTipoUnidade,
+      icone: formIconeUnidade,
+      cidade,
+      endereco: formEnderecoUnidade.trim(),
+      aulasPorTurno: parseInt(formAulasPorTurnoUnidade) || 7,
+      nota: formNotaUnidade.trim(),
+      cor: formCorUnidade
+    });
+    dadosPorUnidade[novoId] = {
+      professores: [], turmas: [], cursos: [], disciplinas: [],
+      indisponibilidadesProf: {}, gradeGerada: null, turmaSelecionadaGrade: ""
+    };
+  }
+  modalUnidadeAberto = false;
+  unidadeEmEdicao = null;
+  navegar('Unidades');
+}
+
+function removerUnidade(id) {
+  if (unidades.length <= 1) { alert("Não é possível remover a única unidade do sistema."); return; }
+  const alvo = unidades.find(u => u.id === id);
+  if (!alvo) return;
+  if (!confirm(`Remover a unidade "${alvo.nome}"? Todos os dados dela (professores, turmas, disciplinas, grades) serão perdidos.`)) return;
+
+  unidades = unidades.filter(u => u.id !== id);
+  delete dadosPorUnidade[id];
+  usuariosGlobais.forEach(u => {
+    if (u.unidadesVinculadas) u.unidadesVinculadas = u.unidadesVinculadas.filter(uid => uid !== id);
+  });
+  if (unidadeSelecionada && unidadeSelecionada.id === id) {
+    unidadeSelecionada = null;
+    resetarEstadoDeTela();
+  }
+  navegar('Unidades');
+}
+
+function renderModalUnidade() {
+  if (!modalUnidadeAberto) return '';
+  return `
+    <div class="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4" onmousedown="if(event.target===this) fecharModalUnidade();">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto" onmousedown="event.stopPropagation();">
+        <div class="flex items-center justify-between p-5 border-b border-slate-100">
+          <h3 class="font-bold text-slate-800 text-base">${unidadeEmEdicao ? 'Editar Unidade' : 'Nova Unidade'}</h3>
+          <button onclick="fecharModalUnidade()" class="text-slate-400 hover:text-slate-600 text-lg leading-none px-1">✕</button>
+        </div>
+        <div class="p-5 space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Nome da Unidade</label>
+            <input type="text" oninput="formNomeUnidade = this.value;" value="${formNomeUnidade}" placeholder="Ex: Senac Boa Viagem - MedioTec" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Tipo</label>
+              <select onchange="formTipoUnidade = this.value; navegar('Unidades');" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500 text-slate-700">
+                <option value="MedioTec" ${formTipoUnidade === 'MedioTec' ? 'selected' : ''}>MedioTec</option>
+                <option value="Faculdade" ${formTipoUnidade === 'Faculdade' ? 'selected' : ''}>Faculdade</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Aulas por Turno</label>
+              <input type="number" oninput="formAulasPorTurnoUnidade = this.value;" value="${formAulasPorTurnoUnidade}" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Cidade</label>
+            <input type="text" oninput="formCidadeUnidade = this.value;" value="${formCidadeUnidade}" placeholder="Ex: Recife - PE" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Endereço (opcional)</label>
+            <input type="text" oninput="formEnderecoUnidade = this.value;" value="${formEnderecoUnidade}" placeholder="Ex: Rua Exemplo, N: 100" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Nota (opcional)</label>
+            <input type="text" oninput="formNotaUnidade = this.value;" value="${formNotaUnidade}" placeholder="Ex: Unidade principal" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-2">Ícone</label>
+            <div class="flex flex-wrap gap-2">
+              ${iconesUnidade.map(ic => `<button type="button" onclick="selecionarIconeUnidade('${ic}')" class="w-9 h-9 rounded-xl border flex items-center justify-center text-base ${formIconeUnidade === ic ? 'border-cyan-500 bg-cyan-50' : 'border-slate-200 bg-white'}">${ic}</button>`).join('')}
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-2">Cor</label>
+            <div class="flex flex-wrap gap-2">
+              ${ordemCoresUnidade.map(cor => `<button type="button" onclick="selecionarCorUnidade('${cor}')" class="w-8 h-8 rounded-full ${paletaUnidade[cor].faixa} ${formCorUnidade === cor ? 'ring-2 ring-offset-2 ring-slate-400' : ''} hover:scale-110 transition"></button>`).join('')}
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-3 p-5 border-t border-slate-100">
+          <button onclick="salvarUnidade()" class="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition flex items-center justify-center gap-1.5">✓ Salvar</button>
+          <button onclick="fecharModalUnidade()" class="flex-1 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-1.5">✕ Cancelar</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderUnidades() {
   return `
     <div class="space-y-6">
-      <div class="flex items-center gap-3">
-        <div class="w-12 h-12 bg-cyan-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-md">🏢</div>
-        <div>
-          <h1 class="text-2xl font-extrabold text-slate-800">Unidades</h1>
-          <p class="text-xs text-slate-500 font-medium">Troque de unidade escolar ou gerencie o acesso</p>
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-cyan-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-md">🏢</div>
+          <div>
+            <h1 class="text-2xl font-extrabold text-slate-800">Gestão de Unidades</h1>
+            <p class="text-xs text-slate-500 font-medium">Cadastre e gerencie as unidades do sistema</p>
+          </div>
         </div>
+        <button onclick="abrirModalNovaUnidade()" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-md transition flex items-center gap-1.5">
+          <span>+</span> <span>Nova Unidade</span>
+        </button>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         ${unidades.map(u => {
-          const ativa = unidadeSelecionada.id === u.id;
+          const ativa = unidadeSelecionada && unidadeSelecionada.id === u.id;
           const d = dadosPorUnidade[u.id];
+          const cor = paletaUnidade[u.cor] || paletaUnidade.cyan;
+          const numUsuarios = usuariosGlobais.filter(us => us.perfil === 'Administrador' || (us.unidadesVinculadas || []).includes(u.id)).length;
           return `
-            <div class="bg-white rounded-2xl border-2 ${ativa ? 'border-cyan-400' : 'border-slate-200'} p-5 shadow-sm space-y-3">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <span class="text-2xl">${u.icone}</span>
-                  <div>
-                    <h4 class="font-extrabold text-slate-800 text-sm">${u.nome}</h4>
-                    <p class="text-[11px] text-slate-400 font-medium">📍 ${u.cidade} · ${u.tipo}</p>
+            <div class="bg-white rounded-2xl border-2 ${ativa ? 'border-cyan-400' : 'border-slate-100'} shadow-sm overflow-hidden flex flex-col">
+              <div class="h-1.5 ${cor.faixa}"></div>
+              <div class="p-5 space-y-3 flex-1 flex flex-col">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl ${cor.iconBg} ${cor.iconText} flex items-center justify-center text-xl flex-shrink-0">${u.icone}</div>
+                    <div>
+                      <h4 class="font-extrabold text-slate-800 text-sm leading-tight">${u.nome}</h4>
+                      <span class="inline-block mt-1 text-[10px] font-bold ${cor.badgeBg} ${cor.badgeText} px-2 py-0.5 rounded-full">${u.tipo}</span>
+                    </div>
                   </div>
+                  ${ativa ? `<span class="bg-cyan-500 text-white text-[9px] font-bold px-2 py-1 rounded-lg flex-shrink-0">Ativa</span>` : ''}
                 </div>
-                ${ativa ? `<span class="bg-cyan-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg">Ativa</span>` : ''}
+
+                <div class="text-[11px] text-slate-500 space-y-1">
+                  <p class="flex items-center gap-1.5">📍 ${u.endereco ? u.endereco : u.cidade}</p>
+                  <p class="flex items-center gap-1.5">🕐 ${u.aulasPorTurno} aulas/turno · com intervalo</p>
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-[10px] font-bold ${cor.badgeBg} ${cor.badgeText} px-2 py-1 rounded-lg">🎓 ${d.turmas.length} turmas</span>
+                  <span class="text-[10px] font-bold ${cor.badgeBg} ${cor.badgeText} px-2 py-1 rounded-lg">👥 ${d.professores.length} professores</span>
+                  <span class="text-[10px] font-bold ${cor.badgeBg} ${cor.badgeText} px-2 py-1 rounded-lg">⚙️ ${numUsuarios} usuários</span>
+                </div>
+
+                ${u.nota ? `<p class="text-[11px] text-slate-400 italic">${u.nota}</p>` : ''}
+
+                <div class="flex-1"></div>
+
+                <div class="flex gap-2 pt-1">
+                  <button onclick="abrirModalEditarUnidade(${u.id})" class="flex-1 flex items-center justify-center gap-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold py-2 rounded-xl text-xs transition">✏️ Editar</button>
+                  <button onclick="removerUnidade(${u.id})" class="border border-red-200 hover:bg-red-50 text-red-500 font-bold py-2 px-3 rounded-xl text-xs transition">🗑️</button>
+                </div>
+                ${!ativa ? `<button onclick="selecionarUnidade(${u.id})" class="w-full text-center text-cyan-600 border border-cyan-300 hover:bg-cyan-50 rounded-xl py-1.5 font-bold transition text-xs">Selecionar Unidade</button>` : ''}
               </div>
-              <div class="flex items-center gap-2 text-[10px] text-slate-500 font-semibold">
-                <span class="bg-slate-50 border border-slate-200 px-2 py-1 rounded-lg">👥 ${d.professores.length} professores</span>
-                <span class="bg-slate-50 border border-slate-200 px-2 py-1 rounded-lg">🎓 ${d.turmas.length} turmas</span>
-                <span class="bg-slate-50 border border-slate-200 px-2 py-1 rounded-lg">⚙️ ${usuariosGlobais.filter(us => us.perfil === 'Administrador' || (us.unidadesVinculadas||[]).includes(u.id)).length} usuários</span>
-              </div>
-              ${!ativa ? `<button onclick="selecionarUnidade(${u.id})" class="w-full text-center text-cyan-600 border border-cyan-300 hover:bg-cyan-50 rounded-lg py-1.5 font-bold transition text-xs">Selecionar Unidade</button>` : ''}
             </div>
           `;
         }).join('')}
       </div>
     </div>
+    ${renderModalUnidade()}
   `;
 }
 
@@ -455,7 +698,7 @@ function renderInicio() {
       <div class="bg-white rounded-2xl border-2 border-cyan-100 p-6 shadow-sm">
         <h3 class="font-bold text-slate-700 text-sm mb-3">Atalhos Rápidos</h3>
         <div class="flex flex-wrap gap-3">
-          <button onclick="navegar('Grade de Horários')" class="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-md transition hover:from-emerald-600 hover:to-emerald-700">⚡ Gerar Grade de Horários</button>
+          <button onclick="abaGrade='gerar'; navegar('Grade de Horários')" class="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-md transition hover:from-emerald-600 hover:to-emerald-700">⚡ Gerar Grade de Horários</button>
           <button onclick="navegar('Professores')" class="bg-white border border-slate-200 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs shadow-sm transition hover:bg-slate-50">👤 Cadastrar Professor</button>
           <button onclick="navegar('Usuários')" class="bg-white border border-slate-200 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs shadow-sm transition hover:bg-slate-50">⚙️ Gerenciar Usuários</button>
         </div>
@@ -680,15 +923,17 @@ function salvarTurma() {
   const nome = document.getElementById('turma-nome').value.trim();
   const turno = document.getElementById('turma-turno').value;
   const tipoCurso = document.getElementById('turma-curso').value;
+  const sala = document.getElementById('turma-sala').value.trim();
   if (!nome) return alert("Preencha o nome da turma!");
 
   if (turmaEmEdicao) {
     turmaEmEdicao.nome = nome.toUpperCase();
     turmaEmEdicao.turno = turno;
     turmaEmEdicao.tipoCurso = tipoCurso;
+    turmaEmEdicao.sala = sala;
     turmaEmEdicao = null;
   } else {
-    d.turmas.push({ id: Date.now(), nome: nome.toUpperCase(), turno, tipoCurso });
+    d.turmas.push({ id: Date.now(), nome: nome.toUpperCase(), turno, tipoCurso, sala });
   }
   navegar('Turmas');
 }
@@ -720,6 +965,7 @@ function renderTurmas() {
         <div class="flex gap-2 text-xs">
           <span class="${t.turno === 'Manhã' ? 'bg-amber-500' : 'bg-cyan-500'} text-white font-semibold px-2 py-0.5 rounded-lg">${t.turno === 'Manhã' ? '☀️' : '🌙'} ${t.turno}</span>
           <span class="bg-white text-slate-700 font-semibold px-2 py-0.5 rounded-lg border">${t.tipoCurso}</span>
+          ${t.sala ? `<span class="bg-white text-slate-500 font-semibold px-2 py-0.5 rounded-lg border">🏫 ${t.sala}</span>` : ''}
         </div>
       </div>
       <div class="flex gap-2">
@@ -732,6 +978,7 @@ function renderTurmas() {
   const nomeVal = turmaEmEdicao ? turmaEmEdicao.nome : '';
   const turnoVal = turmaEmEdicao ? turmaEmEdicao.turno : 'Manhã';
   const cursoVal = turmaEmEdicao ? turmaEmEdicao.tipoCurso : 'MedioTec';
+  const salaVal = turmaEmEdicao ? (turmaEmEdicao.sala || '') : '';
 
   return `
     <div class="space-y-6">
@@ -768,6 +1015,10 @@ function renderTurmas() {
                 <option value="Faculdade" ${cursoVal === 'Faculdade' ? 'selected' : ''}>Faculdade</option>
               </select>
             </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Sala (opcional)</label>
+            <input type="text" id="turma-sala" value="${salaVal}" placeholder="Ex: Sala Nova / 1º Andar" class="w-full border rounded-xl p-2.5 text-sm focus:outline-orange-500">
           </div>
           <button onclick="salvarTurma()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl text-xs shadow-md transition">${turmaEmEdicao ? 'Salvar Alterações' : 'Cadastrar Turma'}</button>
         </div>
@@ -1153,129 +1404,298 @@ function renderDisciplinasCadastradas() {
 /* =========================================================================
    TELA: GRADE DE HORÁRIOS
    ========================================================================= */
-function gerarGradesAutomaticas() {
-  const d = dados();
-  if (d.disciplinas.length === 0) {
-    alert("Cadastre algumas disciplinas antes de gerar a grade!");
-    return;
-  }
+function coletarOcupacaoExistente(d, nomesTurmasExcluir) {
+  const ocupado = {};
+  const slotsPorDiaProf = {};
+  diasSemana.forEach(dia => { ocupado[dia] = {}; slotsPorDiaProf[dia] = {}; });
 
-  let novaGrade = {};
-  d.turmas.forEach(t => {
-    novaGrade[t.nome] = {};
-    diasSemana.forEach(dia => {
-      novaGrade[t.nome][dia] = {};
-      horariosPorTurno[t.turno].forEach(h => {
-        novaGrade[t.nome][dia][h] = null;
-      });
-    });
-  });
-
-  let profOcupado = {};
-  diasSemana.forEach(dia => { profOcupado[dia] = {}; });
-
-  d.turmas.forEach(turmaObj => {
-    const tNome = turmaObj.nome;
-    const tTurno = turmaObj.turno;
-    const discTurma = d.disciplinas.filter(disc => disc.turma === tNome);
-
-    discTurma.forEach(disc => {
-      const profObj = d.professores.find(p => p.nome === disc.professor);
-      let profChave = profObj ? profObj.id : 'novo';
-      if (!d.indisponibilidadesProf[profChave]) {
-        profChave = 'novo';
-        inicializarDisponibilidadesSeNecessario(profChave);
-      }
-
-      let aulasRestantes = parseInt(disc.aulasSemana) || 1;
-
+  if (d.gradeGerada) {
+    Object.keys(d.gradeGerada).forEach(tNome => {
+      if (nomesTurmasExcluir.includes(tNome)) return;
+      const tInfo = d.turmas.find(t => t.nome === tNome);
+      if (!tInfo) return;
       diasSemana.forEach(dia => {
-        if (aulasRestantes <= 0) return;
-        horariosPorTurno[tTurno].forEach(h => {
-          if (aulasRestantes <= 0) return;
-          if (novaGrade[tNome][dia][h] === null) {
-            const isIndisponivel = d.indisponibilidadesProf[profChave]?.[tTurno]?.[dia]?.[h] === true;
-            const profJaOcupadoNesseMomento = profOcupado[dia][h]?.[disc.professor];
-
-            if (!isIndisponivel && !profJaOcupadoNesseMomento) {
-              novaGrade[tNome][dia][h] = { disciplina: disc.nome, professor: disc.professor, tipo: disc.tipo };
-              if (!profOcupado[dia][h]) profOcupado[dia][h] = {};
-              profOcupado[dia][h][disc.professor] = true;
-              aulasRestantes--;
-            }
+        horariosPorTurno[tInfo.turno].forEach((h, idx) => {
+          const aula = d.gradeGerada[tNome]?.[dia]?.[h];
+          if (aula) {
+            if (!ocupado[dia][h]) ocupado[dia][h] = {};
+            ocupado[dia][h][aula.professor] = true;
+            if (!slotsPorDiaProf[dia][aula.professor]) slotsPorDiaProf[dia][aula.professor] = [];
+            slotsPorDiaProf[dia][aula.professor].push({ turno: tInfo.turno, indice: idx });
           }
         });
       });
     });
-  });
+  }
+  return { ocupado, slotsPorDiaProf };
+}
 
-  d.gradeGerada = novaGrade;
-  if (d.turmas.length > 0 && !d.turmaSelecionadaGrade) {
-    d.turmaSelecionadaGrade = d.turmas[0].nome;
+function gerarGradeInteligente() {
+  const d = dados();
+
+  if (!turmaParaGerar) { alert("Selecione uma turma para gerar a grade!"); return; }
+
+  const listaTurmas = turmaParaGerar === 'Todas' ? d.turmas : d.turmas.filter(t => t.nome === turmaParaGerar);
+  if (listaTurmas.length === 0) { alert("Turma não encontrada."); return; }
+
+  const semDisciplinas = listaTurmas.filter(t => d.disciplinas.filter(disc => disc.turma === t.nome).length === 0);
+  if (semDisciplinas.length === listaTurmas.length) {
+    alert("Cadastre disciplinas para essa(s) turma(s) antes de gerar a grade!");
+    return;
   }
 
-  alert("Grade gerada com sucesso respeitando a disponibilidade dos professores!");
+  if (!d.gradeGerada) d.gradeGerada = {};
+  const nomesAlvo = listaTurmas.map(t => t.nome);
+  const { ocupado, slotsPorDiaProf } = coletarOcupacaoExistente(d, nomesAlvo);
+
+  const ultimoIndiceManha = horariosPorTurno["Manhã"].length - 1;
+  const professoresSobrecarregados = [];
+
+  listaTurmas.forEach(turmaObj => {
+    const tNome = turmaObj.nome;
+    const tTurno = turmaObj.turno;
+    const horarios = horariosPorTurno[tTurno];
+    const discTurma = d.disciplinas.filter(disc => disc.turma === tNome);
+
+    const grade = {};
+    diasSemana.forEach(dia => {
+      grade[dia] = {};
+      horarios.forEach(h => { grade[dia][h] = null; });
+    });
+
+    const restante = {};
+    discTurma.forEach(disc => { restante[disc.id] = parseInt(disc.aulasSemana) || 1; });
+
+    diasSemana.forEach(dia => {
+      horarios.forEach((h, idx) => {
+        const candidatos = discTurma.filter(disc => restante[disc.id] > 0);
+        if (candidatos.length === 0) return;
+
+        let melhor = null;
+        let melhorPontuacao = Infinity;
+
+        candidatos.forEach(disc => {
+          const profObj = d.professores.find(p => p.nome === disc.professor);
+          const profChave = profObj ? profObj.id : 'novo';
+          inicializarDisponibilidadesSeNecessario(profChave);
+
+          const indisponivel = d.indisponibilidadesProf[profChave]?.[tTurno]?.[dia]?.[h] === true;
+          if (indisponivel) return;
+          if (ocupado[dia][h] && ocupado[dia][h][disc.professor]) return;
+
+          const slotsDoDia = slotsPorDiaProf[dia][disc.professor] || [];
+          const aulasHoje = slotsDoDia.length;
+          if (profObj && aulasHoje >= profObj.maxDia) return;
+
+          if (tTurno === 'Tarde' && idx === 0) {
+            const terminouManhaUltima = slotsDoDia.some(s => s.turno === 'Manhã' && s.indice === ultimoIndiceManha);
+            if (terminouManhaUltima) return;
+          }
+
+          let pontuacaoGap = 1;
+          const slotsMesmoTurno = slotsDoDia.filter(s => s.turno === tTurno).map(s => s.indice);
+          if (slotsMesmoTurno.length === 0) {
+            pontuacaoGap = slotsDoDia.length === 0 ? 0 : 1;
+          } else if (slotsMesmoTurno.includes(idx - 1)) {
+            pontuacaoGap = 0;
+          } else {
+            pontuacaoGap = 2;
+          }
+
+          if (pontuacaoGap < melhorPontuacao) {
+            melhorPontuacao = pontuacaoGap;
+            melhor = { disc, profObj };
+          }
+        });
+
+        if (melhor) {
+          const disc = melhor.disc;
+          grade[dia][h] = { disciplina: disc.nome, professor: disc.professor, tipo: disc.tipo };
+          restante[disc.id]--;
+
+          if (!ocupado[dia][h]) ocupado[dia][h] = {};
+          ocupado[dia][h][disc.professor] = true;
+          if (!slotsPorDiaProf[dia][disc.professor]) slotsPorDiaProf[dia][disc.professor] = [];
+          slotsPorDiaProf[dia][disc.professor].push({ turno: tTurno, indice: idx });
+        }
+      });
+    });
+
+    d.gradeGerada[tNome] = grade;
+  });
+
+  // Checagem (não bloqueante) do limite mensal de aulas por professor
+  d.professores.forEach(prof => {
+    let totalSemana = 0;
+    diasSemana.forEach(dia => {
+      totalSemana += (slotsPorDiaProf[dia][prof.nome] || []).length;
+    });
+    const estimativaMensal = Math.round(totalSemana * 4.3);
+    if (estimativaMensal > prof.maxMes) {
+      professoresSobrecarregados.push(`${prof.nome} (~${estimativaMensal}/mês, limite ${prof.maxMes})`);
+    }
+  });
+
+  d.turmaSelecionadaGrade = turmaParaGerar === 'Todas' ? (d.turmas[0] ? d.turmas[0].nome : "") : turmaParaGerar;
+  abaGrade = 'visualizar';
+
+  let mensagem = "Grade gerada com sucesso respeitando disponibilidade, limite diário, transição entre turnos e minimizando janelas!";
+  if (professoresSobrecarregados.length > 0) {
+    mensagem += "\n\n⚠️ Atenção — pode ultrapassar o limite mensal:\n" + professoresSobrecarregados.join("\n");
+  }
+  alert(mensagem);
   navegar('Grade de Horários');
 }
 
-function renderGradeHorarios() {
+function mudarAbaGrade(aba) {
+  abaGrade = aba;
+  navegar('Grade de Horários');
+}
+
+function mudarSubAbaGrade(sub) {
+  subAbaGradeView = sub;
+  navegar('Grade de Horários');
+}
+
+function linhasComIntervalo(turno) {
+  const aulas = horariosPorTurno[turno];
+  const linhas = [];
+  aulas.forEach((h, idx) => {
+    linhas.push({ tipo: 'aula', horario: h, indice: idx });
+    if (idx === 2) linhas.push({ tipo: 'intervalo', horario: intervalosPorTurno[turno] });
+  });
+  return linhas;
+}
+
+function construirGradeVazia(turno) {
+  const g = {};
+  diasSemana.forEach(dia => {
+    g[dia] = {};
+    horariosPorTurno[turno].forEach(h => { g[dia][h] = null; });
+  });
+  return g;
+}
+
+function clonarGrade(gradeObj) {
+  return JSON.parse(JSON.stringify(gradeObj));
+}
+
+function dataFormatadaHoje() {
+  const hoje = new Date();
+  const dd = String(hoje.getDate()).padStart(2, '0');
+  const mm = String(hoje.getMonth() + 1).padStart(2, '0');
+  const yyyy = hoje.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+function imprimirGrades() {
+  window.print();
+}
+
+/* --------- Edição de grade por turma --------- */
+function abrirEdicaoGrade(nomeTurma) {
   const d = dados();
-  if (!d.turmaSelecionadaGrade && d.turmas.length > 0) {
-    d.turmaSelecionadaGrade = d.turmas[0].nome;
+  const turma = d.turmas.find(t => t.nome === nomeTurma);
+  if (!turma) return;
+
+  const gradeAtual = (d.gradeGerada && d.gradeGerada[nomeTurma]) ? d.gradeGerada[nomeTurma] : construirGradeVazia(turma.turno);
+  turmaEmEdicaoGrade = nomeTurma;
+  gradeEmEdicaoOriginal = clonarGrade(gradeAtual);
+  gradeEmEdicaoTemp = clonarGrade(gradeAtual);
+  formSalaEdicao = turma.sala || '';
+  salaOriginalEdicao = turma.sala || '';
+  modoEdicaoGrade = true;
+  navegar('Grade de Horários');
+}
+
+function fecharEdicaoGrade() {
+  modoEdicaoGrade = false;
+  turmaEmEdicaoGrade = null;
+  gradeEmEdicaoTemp = null;
+  gradeEmEdicaoOriginal = null;
+  navegar('Grade de Horários');
+}
+
+function desfazerEdicaoGrade() {
+  if (!gradeEmEdicaoOriginal) return;
+  gradeEmEdicaoTemp = clonarGrade(gradeEmEdicaoOriginal);
+  formSalaEdicao = salaOriginalEdicao;
+  navegar('Grade de Horários');
+}
+
+function editarCelulaGrade(dia, horario, discId) {
+  if (!discId) {
+    gradeEmEdicaoTemp[dia][horario] = null;
+  } else {
+    const disc = dados().disciplinas.find(x => String(x.id) === String(discId));
+    if (disc) gradeEmEdicaoTemp[dia][horario] = { disciplina: disc.nome, professor: disc.professor, tipo: disc.tipo };
   }
+  navegar('Grade de Horários');
+}
 
-  const turmaAtualObj = d.turmas.find(t => t.nome === d.turmaSelecionadaGrade);
-  const turnoTurma = turmaAtualObj ? turmaAtualObj.turno : "Manhã";
-  const horariosDaTurma = horariosPorTurno[turnoTurma] || horariosPorTurno["Manhã"];
+function salvarEdicaoGrade() {
+  const d = dados();
+  if (!d.gradeGerada) d.gradeGerada = {};
+  d.gradeGerada[turmaEmEdicaoGrade] = clonarGrade(gradeEmEdicaoTemp);
+  const turma = d.turmas.find(t => t.nome === turmaEmEdicaoGrade);
+  if (turma) turma.sala = formSalaEdicao;
+  alert("Alterações salvas com sucesso!");
+  fecharEdicaoGrade();
+}
 
-  let linhasTabela = "";
-  if (d.gradeGerada && d.gradeGerada[d.turmaSelecionadaGrade]) {
-    linhasTabela = horariosDaTurma.map(h => {
-      const celulasDias = diasSemana.map(dia => {
-        const aula = d.gradeGerada[d.turmaSelecionadaGrade][dia][h];
-        if (aula) {
-          return `
-            <td class="border border-slate-200 p-2 text-center bg-cyan-50/60 rounded-xl">
-              <div class="font-extrabold text-slate-800 text-xs">${aula.disciplina}</div>
-              <div class="text-[10px] text-cyan-700 font-semibold mt-0.5">👤 ${aula.professor}</div>
-            </td>
-          `;
-        }
-        return `<td class="border border-slate-200 p-2 text-center text-slate-300 text-xs italic">Livre</td>`;
-      }).join('');
+function removerGradeTurma(nomeTurma) {
+  const d = dados();
+  if (!confirm(`Excluir a grade gerada para "${nomeTurma}"? Esta ação não pode ser desfeita.`)) return;
+  if (d.gradeGerada) delete d.gradeGerada[nomeTurma];
+  navegar('Grade de Horários');
+}
 
+function renderEdicaoGrade() {
+  const d = dados();
+  const turma = d.turmas.find(t => t.nome === turmaEmEdicaoGrade);
+  if (!turma) { modoEdicaoGrade = false; return renderGradeHorarios(); }
+
+  const discTurma = d.disciplinas.filter(disc => disc.turma === turma.nome);
+  const linhas = linhasComIntervalo(turma.turno);
+
+  const linhasTabela = linhas.map(linha => {
+    const celulasDias = diasSemana.map(dia => {
+      const aula = gradeEmEdicaoTemp[dia][linha.horario];
+      const discAtual = aula ? discTurma.find(x => x.nome === aula.disciplina && x.professor === aula.professor) : null;
       return `
-        <tr>
-          <td class="border border-slate-200 p-2 text-center font-bold text-slate-600 bg-slate-50 text-xs whitespace-nowrap">${h}</td>
-          ${celulasDias}
-        </tr>
+        <td class="border border-slate-200 p-1.5">
+          <select onchange="editarCelulaGrade('${dia}', '${linha.horario}', this.value)" class="w-full text-[11px] font-semibold border border-slate-200 rounded-lg p-1.5 focus:outline-cyan-500 bg-white">
+            <option value="" ${!discAtual ? 'selected' : ''}>— Vazio —</option>
+            ${discTurma.map(disc => `<option value="${disc.id}" ${discAtual && discAtual.id === disc.id ? 'selected' : ''}>${disc.nome} - ${disc.professor}</option>`).join('')}
+          </select>
+        </td>
       `;
     }).join('');
-  } else {
-    linhasTabela = `<tr><td colspan="6" class="text-center p-8 text-slate-400 text-xs italic">Nenhuma grade gerada ainda. Clique no botão acima para gerar automaticamente.</td></tr>`;
-  }
+
+    return `
+      <tr>
+        <td class="border border-slate-200 p-2 text-center font-bold text-slate-600 bg-slate-50 text-xs whitespace-nowrap">${linha.horario}</td>
+        ${celulasDias}
+      </tr>
+    `;
+  }).join('');
 
   return `
     <div class="space-y-6">
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border-2 border-cyan-200 shadow-sm">
-        <div>
-          <h1 class="text-2xl font-extrabold text-slate-800">Grade de Horários</h1>
-          <p class="text-xs text-slate-500 font-medium">${unidadeSelecionada.nome} — geração e visualização automática por turma</p>
+      <div class="bg-white rounded-2xl border-2 border-cyan-200 p-4 shadow-sm flex items-center justify-between flex-wrap gap-3">
+        <button onclick="fecharEdicaoGrade()" class="flex items-center gap-1.5 text-slate-600 hover:text-slate-800 font-bold text-xs border border-slate-200 px-3 py-2 rounded-xl transition">← Voltar</button>
+        <div class="flex items-center gap-2">
+          <button onclick="desfazerEdicaoGrade()" class="flex items-center gap-1.5 text-slate-600 hover:text-slate-800 font-bold text-xs border border-slate-200 px-3 py-2 rounded-xl transition">↩️ Desfazer</button>
+          <button onclick="salvarEdicaoGrade()" class="flex items-center gap-1.5 bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-md transition">💾 Salvar Alterações</button>
         </div>
-        <button onclick="gerarGradesAutomaticas()" class="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold px-5 py-3 rounded-xl text-xs shadow-md transition flex items-center gap-2">
-          <span>⚡</span> <span>Gerar Grades Automáticas</span>
-        </button>
       </div>
 
       <div class="bg-white rounded-2xl border-2 border-cyan-200 p-6 shadow-sm space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
-          <div class="flex items-center gap-2">
-            <span class="text-sm font-bold text-slate-700">Selecione a Turma:</span>
-            <select onchange="dados().turmaSelecionadaGrade = this.value; navegar('Grade de Horários');" class="bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs font-semibold text-slate-700 focus:outline-cyan-500">
-              ${d.turmas.map(t => `<option value="${t.nome}" ${d.turmaSelecionadaGrade === t.nome ? 'selected' : ''}>${t.nome} (${t.turno})</option>`).join('')}
-            </select>
-          </div>
-          ${turmaAtualObj ? `<span class="bg-cyan-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg">Turno: ${turmaAtualObj.turno}</span>` : ''}
+        <h3 class="font-extrabold text-slate-800 text-base">Editando: ${turma.nome} - ${turma.turno}</h3>
+
+        <div class="max-w-sm">
+          <label class="block text-xs font-bold text-slate-600 mb-1">🏫 Sala:</label>
+          <input type="text" oninput="formSalaEdicao = this.value;" value="${formSalaEdicao}" placeholder="Ex: Sala Nova / 1º Andar" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500">
         </div>
 
         <div class="overflow-x-auto">
@@ -1290,6 +1710,320 @@ function renderGradeHorarios() {
           </table>
         </div>
       </div>
+    </div>
+  `;
+}
+
+/* --------- Visualização por turma --------- */
+function renderCardTurmaGrade(turma, d) {
+  const linhas = linhasComIntervalo(turma.turno);
+  const temGrade = d.gradeGerada && d.gradeGerada[turma.nome];
+
+  const linhasTabela = linhas.map(linha => {
+    if (linha.tipo === 'intervalo') {
+      return `
+        <tr>
+          <td class="border border-slate-200 p-2 text-center font-bold text-slate-500 bg-slate-50 text-xs whitespace-nowrap">${linha.horario}</td>
+          <td colspan="${diasSemana.length}" class="border border-slate-200 p-1.5 text-center bg-slate-100 text-slate-500 text-[11px] font-bold tracking-wide">🍽️ INTERVALO</td>
+        </tr>
+      `;
+    }
+    const celulasDias = diasSemana.map(dia => {
+      const aula = temGrade ? d.gradeGerada[turma.nome][dia][linha.horario] : null;
+      if (aula) {
+        const cor = corLegendaProfessor(aula.professor);
+        return `
+          <td class="border border-slate-200 p-1.5 text-center align-top">
+            <div class="rounded-lg p-1.5 ${cor.bg}">
+              <div class="font-extrabold ${cor.text} text-[11px] leading-tight">${aula.disciplina}</div>
+              <div class="text-[9px] ${cor.text} font-semibold mt-0.5">${aula.professor}</div>
+            </div>
+          </td>
+        `;
+      }
+      return `<td class="border border-slate-200 p-1.5 text-center text-slate-300 text-xs">—</td>`;
+    }).join('');
+
+    return `
+      <tr>
+        <td class="border border-slate-200 p-2 text-center font-bold text-slate-600 bg-slate-50 text-xs whitespace-nowrap">${linha.horario}</td>
+        ${celulasDias}
+      </tr>
+    `;
+  }).join('');
+
+  const professoresDaTurma = [...new Set(d.disciplinas.filter(disc => disc.turma === turma.nome).map(disc => disc.professor))];
+
+  return `
+    <div class="bg-white rounded-2xl border-2 border-slate-100 shadow-sm p-6 space-y-4">
+      <div class="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <p class="text-cyan-600 font-black text-xs tracking-wide uppercase">${unidadeSelecionada.nome.split(' - ')[0]}</p>
+          <h3 class="text-xl font-black text-slate-800">${turma.nome}</h3>
+        </div>
+        <div class="flex gap-2 flex-shrink-0 print:hidden">
+          <button onclick="abrirEdicaoGrade('${turma.nome}')" class="flex items-center gap-1.5 border border-cyan-200 text-cyan-600 hover:bg-cyan-50 font-bold text-xs px-3 py-1.5 rounded-lg transition">✏️ Editar</button>
+          <button onclick="removerGradeTurma('${turma.nome}')" class="flex items-center gap-1.5 border border-red-200 text-red-500 hover:bg-red-50 font-bold text-xs px-3 py-1.5 rounded-lg transition">🗑️ Excluir</button>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-2 text-[10px] font-bold">
+        <span class="${turma.turno === 'Manhã' ? 'bg-amber-50 text-amber-700' : 'bg-cyan-50 text-cyan-700'} px-2.5 py-1 rounded-lg">${turma.turno === 'Manhã' ? '☀️' : '🌙'} ${turma.turno}</span>
+        <span class="bg-slate-50 text-slate-600 px-2.5 py-1 rounded-lg">🏫 Sala: ${turma.sala || 'A definir'}</span>
+        <span class="bg-slate-50 text-slate-600 px-2.5 py-1 rounded-lg">🎓 ${turma.tipoCurso}</span>
+        <span class="bg-slate-50 text-slate-600 px-2.5 py-1 rounded-lg">📅 ${dataFormatadaHoje()}</span>
+      </div>
+
+      ${temGrade ? `
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 text-xs font-bold">
+                <th class="border border-slate-200 p-2.5">Horário</th>
+                ${diasSemana.map(dia => `<th class="border border-slate-200 p-2.5">${dia}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>${linhasTabela}</tbody>
+          </table>
+        </div>
+        ${professoresDaTurma.length > 0 ? `
+          <div class="pt-3 border-t border-slate-100">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">Legenda de Professores</p>
+            <div class="flex flex-wrap gap-1.5">
+              ${professoresDaTurma.map(nome => {
+                const cor = corLegendaProfessor(nome);
+                return `<span class="text-[10px] font-bold px-2 py-1 rounded-full ${cor.dot} text-white">${nome}</span>`;
+              }).join('')}
+            </div>
+          </div>
+        ` : ''}
+      ` : `
+        <p class="text-xs text-slate-400 italic text-center py-6 print:hidden">Grade ainda não gerada para esta turma. Use a aba "Gerar Nova Grade".</p>
+      `}
+    </div>
+  `;
+}
+
+/* --------- Visualização por professor --------- */
+function renderPorProfessor(d) {
+  const professoresComAula = d.professores.filter(prof => {
+    if (!d.gradeGerada) return false;
+    return Object.keys(d.gradeGerada).some(tNome => {
+      const turmaInfo = d.turmas.find(t => t.nome === tNome);
+      if (!turmaInfo) return false;
+      return diasSemana.some(dia => horariosPorTurno[turmaInfo.turno].some(h => {
+        const aula = d.gradeGerada[tNome][dia][h];
+        return aula && aula.professor === prof.nome;
+      }));
+    });
+  });
+
+  if (professoresComAula.length === 0) {
+    return `<div class="bg-white rounded-2xl border-2 border-slate-100 shadow-sm p-8 text-center text-slate-400 text-xs italic">Nenhuma grade gerada ainda. Use a aba "Gerar Nova Grade".</div>`;
+  }
+
+  return professoresComAula.map(prof => {
+    const cor = corLegendaProfessor(prof.nome);
+    const blocosTurno = ['Manhã', 'Tarde'].map(turno => {
+      const linhas = linhasComIntervalo(turno);
+      const temAlgumaAula = diasSemana.some(dia => horariosPorTurno[turno].some(h => {
+        return Object.keys(d.gradeGerada || {}).some(tNome => {
+          const turmaInfo = d.turmas.find(t => t.nome === tNome);
+          return turmaInfo && turmaInfo.turno === turno && d.gradeGerada[tNome][dia] && d.gradeGerada[tNome][dia][h] && d.gradeGerada[tNome][dia][h].professor === prof.nome;
+        });
+      }));
+      if (!temAlgumaAula) return '';
+
+      const linhasTabela = linhas.map(linha => {
+        if (linha.tipo === 'intervalo') {
+          return `<tr><td class="border border-slate-200 p-1.5 text-center font-bold text-slate-500 bg-slate-50 text-[10px] whitespace-nowrap">${linha.horario}</td><td colspan="${diasSemana.length}" class="border border-slate-200 p-1 text-center bg-slate-100 text-slate-500 text-[10px] font-bold">🍽️ INTERVALO</td></tr>`;
+        }
+        const celulas = diasSemana.map(dia => {
+          let encontrado = null;
+          let turmaEncontrada = null;
+          Object.keys(d.gradeGerada || {}).forEach(tNome => {
+            const turmaInfo = d.turmas.find(t => t.nome === tNome);
+            if (turmaInfo && turmaInfo.turno === turno) {
+              const aula = d.gradeGerada[tNome][dia][linha.horario];
+              if (aula && aula.professor === prof.nome) { encontrado = aula; turmaEncontrada = tNome; }
+            }
+          });
+          if (encontrado) {
+            return `<td class="border border-slate-200 p-1.5 text-center align-top"><div class="rounded-lg p-1.5 ${cor.bg}"><div class="font-extrabold ${cor.text} text-[10px]">${encontrado.disciplina}</div><div class="text-[9px] ${cor.text}">${turmaEncontrada}</div></div></td>`;
+          }
+          return `<td class="border border-slate-200 p-1.5 text-center text-slate-300 text-[10px]">—</td>`;
+        }).join('');
+        return `<tr><td class="border border-slate-200 p-1.5 text-center font-bold text-slate-600 bg-slate-50 text-[10px] whitespace-nowrap">${linha.horario}</td>${celulas}</tr>`;
+      }).join('');
+
+      return `
+        <div class="space-y-1.5">
+          <p class="text-[10px] font-bold text-slate-500">${turno === 'Manhã' ? '☀️ Manhã' : '🌙 Tarde'}</p>
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+              <thead><tr class="bg-slate-100 text-slate-700 text-[10px] font-bold"><th class="border border-slate-200 p-1.5">Horário</th>${diasSemana.map(dia => `<th class="border border-slate-200 p-1.5">${dia}</th>`).join('')}</tr></thead>
+              <tbody>${linhasTabela}</tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="bg-white rounded-2xl border-2 border-slate-100 shadow-sm p-6 space-y-4">
+        <h3 class="font-black text-slate-800 text-base flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full ${cor.dot} inline-block"></span>${prof.nome}</h3>
+        ${blocosTurno}
+      </div>
+    `;
+  }).join('');
+}
+
+/* --------- Visão geral --------- */
+function renderVisaoGeral(d) {
+  const totalTurmas = d.turmas.length;
+  const comGrade = d.turmas.filter(t => d.gradeGerada && d.gradeGerada[t.nome]).length;
+  const semGrade = totalTurmas - comGrade;
+  const totalAulasSemana = d.disciplinas.reduce((soma, disc) => soma + (parseInt(disc.aulasSemana) || 0), 0);
+
+  const aulasPorProf = {};
+  d.professores.forEach(prof => { aulasPorProf[prof.nome] = 0; });
+  if (d.gradeGerada) {
+    Object.keys(d.gradeGerada).forEach(tNome => {
+      const turmaInfo = d.turmas.find(t => t.nome === tNome);
+      if (!turmaInfo) return;
+      diasSemana.forEach(dia => {
+        horariosPorTurno[turmaInfo.turno].forEach(h => {
+          const aula = d.gradeGerada[tNome][dia][h];
+          if (aula) aulasPorProf[aula.professor] = (aulasPorProf[aula.professor] || 0) + 1;
+        });
+      });
+    });
+  }
+
+  return `
+    <div class="space-y-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-2xl border-2 border-cyan-100 p-5 shadow-sm">
+          <p class="text-xs font-bold text-slate-500 mb-1">🎓 Turmas</p>
+          <p class="text-2xl font-black text-slate-800">${totalTurmas}</p>
+        </div>
+        <div class="bg-white rounded-2xl border-2 border-emerald-100 p-5 shadow-sm">
+          <p class="text-xs font-bold text-slate-500 mb-1">✅ Com Grade Gerada</p>
+          <p class="text-2xl font-black text-emerald-600">${comGrade}</p>
+        </div>
+        <div class="bg-white rounded-2xl border-2 border-amber-100 p-5 shadow-sm">
+          <p class="text-xs font-bold text-slate-500 mb-1">⏳ Sem Grade</p>
+          <p class="text-2xl font-black text-amber-600">${semGrade}</p>
+        </div>
+        <div class="bg-white rounded-2xl border-2 border-cyan-100 p-5 shadow-sm">
+          <p class="text-xs font-bold text-slate-500 mb-1">📖 Aulas/semana (total)</p>
+          <p class="text-2xl font-black text-slate-800">${totalAulasSemana}</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border-2 border-cyan-100 p-6 shadow-sm">
+        <h3 class="font-bold text-slate-700 text-sm mb-3">Aulas Alocadas por Professor (semana)</h3>
+        <div class="space-y-2">
+          ${d.professores.map(prof => {
+            const cor = corLegendaProfessor(prof.nome);
+            const total = aulasPorProf[prof.nome] || 0;
+            return `
+              <div class="flex items-center justify-between py-1.5 border-b border-slate-50 last:border-0">
+                <span class="text-xs font-semibold text-slate-700 flex items-center gap-2"><span class="w-2 h-2 rounded-full ${cor.dot} inline-block"></span>${prof.nome}</span>
+                <span class="text-[11px] font-bold ${cor.bg} ${cor.text} px-2.5 py-1 rounded-lg">${total} aula${total === 1 ? '' : 's'}/sem</span>
+              </div>
+            `;
+          }).join('') || `<p class="text-xs text-slate-400 italic text-center py-4">Nenhum professor cadastrado.</p>`}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderGradeHorarios() {
+  const d = dados();
+
+  if (modoEdicaoGrade) return renderEdicaoGrade();
+
+  const barraAbas = `
+    <div class="bg-white rounded-2xl border-2 border-cyan-200 p-6 shadow-sm space-y-5 print:hidden">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-gradient-to-br from-cyan-400 to-orange-400 text-white rounded-2xl flex items-center justify-center text-2xl shadow-md">📅</div>
+          <div>
+            <h1 class="text-2xl font-extrabold text-slate-800">Grade de Horários</h1>
+            <p class="text-xs text-slate-500 font-medium">Gere e visualize grades inteligentes</p>
+          </div>
+        </div>
+      </div>
+      <div class="h-1.5 rounded-full bg-gradient-to-r from-cyan-400 via-cyan-500 to-orange-400"></div>
+      <div class="grid grid-cols-2 gap-2 bg-slate-100/70 p-1.5 rounded-xl">
+        <button onclick="mudarAbaGrade('visualizar')" class="py-2.5 rounded-lg text-xs font-bold transition ${abaGrade === 'visualizar' ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-400 hover:text-slate-600'}">Visualizar Grades</button>
+        <button onclick="mudarAbaGrade('gerar')" class="py-2.5 rounded-lg text-xs font-bold transition ${abaGrade === 'gerar' ? 'bg-cyan-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}">Gerar Nova Grade</button>
+      </div>
+    </div>
+  `;
+
+  if (abaGrade === 'gerar') {
+    const podeGerar = !!turmaParaGerar;
+    return `
+      <div class="space-y-6">
+        ${barraAbas}
+        <div class="bg-gradient-to-br from-cyan-50 to-emerald-50 border-2 border-cyan-100 rounded-2xl p-6 shadow-sm space-y-4 max-w-xl">
+          <h3 class="font-extrabold text-slate-800 text-sm">Selecione a Turma</h3>
+          <select onchange="turmaParaGerar = this.value; navegar('Grade de Horários');" class="w-full bg-white border-2 border-cyan-300 rounded-xl p-3 text-sm font-semibold text-slate-700 focus:outline-cyan-500">
+            <option value="" ${!turmaParaGerar ? 'selected' : ''} disabled>Escolha uma turma...</option>
+            <option value="Todas" ${turmaParaGerar === 'Todas' ? 'selected' : ''}>🗂️ Todas as Turmas</option>
+            ${d.turmas.map(t => `<option value="${t.nome}" ${turmaParaGerar === t.nome ? 'selected' : ''}>${t.nome} (${t.turno})</option>`).join('')}
+          </select>
+          <button onclick="gerarGradeInteligente()" ${podeGerar ? '' : 'disabled'} class="w-full font-bold py-3 rounded-xl text-sm shadow-md transition flex items-center justify-center gap-2 ${podeGerar ? 'bg-gradient-to-r from-cyan-500 to-orange-400 text-white hover:opacity-90 cursor-pointer' : 'bg-gradient-to-r from-slate-200 to-slate-300 text-slate-400 cursor-not-allowed'}">
+            <span>⚡</span> <span>Gerar Grade Inteligente</span>
+          </button>
+          <p class="text-[11px] text-slate-500">A geração respeita: disponibilidade do professor, máximo de aulas por dia, transição entre turnos e minimiza janelas na grade.</p>
+        </div>
+      </div>
+    `;
+  }
+
+  const subAbas = `
+    <div class="bg-white rounded-2xl border-2 border-slate-100 p-4 shadow-sm space-y-4 print:hidden">
+      <div class="grid grid-cols-3 gap-2 bg-slate-100/70 p-1.5 rounded-xl">
+        <button onclick="mudarSubAbaGrade('turma')" class="py-2 rounded-lg text-[11px] font-bold transition ${subAbaGradeView === 'turma' ? 'bg-cyan-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}">👁️ Por Turma</button>
+        <button onclick="mudarSubAbaGrade('professor')" class="py-2 rounded-lg text-[11px] font-bold transition ${subAbaGradeView === 'professor' ? 'bg-cyan-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}">👁️ Por Professor</button>
+        <button onclick="mudarSubAbaGrade('geral')" class="py-2 rounded-lg text-[11px] font-bold transition ${subAbaGradeView === 'geral' ? 'bg-cyan-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}">👁️ Visão Geral</button>
+      </div>
+      ${subAbaGradeView === 'turma' ? `
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
+          <div class="flex-1">
+            <label class="block text-[10px] font-bold text-slate-500 mb-1">Filtrar por Turma</label>
+            <select onchange="filtroTurmaGradeView = this.value; navegar('Grade de Horários');" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs font-semibold text-slate-700 focus:outline-cyan-500">
+              <option value="Todas" ${filtroTurmaGradeView === 'Todas' ? 'selected' : ''}>🗂️ Todas as turmas</option>
+              ${d.turmas.map(t => `<option value="${t.nome}" ${filtroTurmaGradeView === t.nome ? 'selected' : ''}>${t.nome}</option>`).join('')}
+            </select>
+          </div>
+          <button onclick="imprimirGrades()" class="self-end sm:self-auto flex items-center justify-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs px-4 py-2 rounded-xl transition whitespace-nowrap">🖨️ Imprimir Todas</button>
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  let conteudo = '';
+  if (subAbaGradeView === 'professor') {
+    conteudo = renderPorProfessor(d);
+  } else if (subAbaGradeView === 'geral') {
+    conteudo = renderVisaoGeral(d);
+  } else {
+    const turmasFiltradas = filtroTurmaGradeView === 'Todas' ? d.turmas : d.turmas.filter(t => t.nome === filtroTurmaGradeView);
+    conteudo = turmasFiltradas.length > 0
+      ? `<div class="space-y-6">${turmasFiltradas.map(t => renderCardTurmaGrade(t, d)).join('')}</div>`
+      : `<div class="bg-white rounded-2xl border-2 border-slate-100 shadow-sm p-8 text-center text-slate-400 text-xs italic">Nenhuma turma cadastrada.</div>`;
+  }
+
+  return `
+    <div class="space-y-6">
+      ${barraAbas}
+      ${subAbas}
+      ${conteudo}
     </div>
   `;
 }

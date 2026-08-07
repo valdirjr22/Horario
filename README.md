@@ -4,6 +4,44 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MedioTec - Sistema de Horários</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script type="module">
+  import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getFirestore, doc, setDoc, getDoc, getDocs, addDoc, deleteDoc, collection, onSnapshot
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import {
+    getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut,
+    createUserWithEmailAndPassword, sendPasswordResetEmail
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB2t9hLd01F70BoVsRRR9N0RK-vvMsdQnM",
+    authDomain: "horario-mediotec.firebaseapp.com",
+    projectId: "horario-mediotec",
+    storageBucket: "horario-mediotec.firebasestorage.app",
+    messagingSenderId: "398039975381",
+    appId: "1:398039975381:web:044047bb5db2c6b4d5e95c",
+    measurementId: "G-6CNYXN2P8P"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  // Expõe pro resto do app (script clássico, não-module) usar
+  window.db = db;
+  window.auth = auth;
+  window.fb = {
+    doc, setDoc, getDoc, getDocs, addDoc, deleteDoc, collection, onSnapshot,
+    signInWithEmailAndPassword, onAuthStateChanged, signOut,
+    createUserWithEmailAndPassword, sendPasswordResetEmail, getAuth
+  };
+  window.firebaseConfigRef = firebaseConfig;
+  window.firebaseAppModule = { initializeApp, deleteApp };
+
+  // Sinaliza pro resto do app que o Firebase terminou de carregar
+  window.dispatchEvent(new Event('firebase-pronto'));
+</script>
 </head>
 <body class="bg-gradient-to-br from-cyan-50 via-white to-orange-50 min-h-screen font-sans">
 
@@ -14,10 +52,10 @@
    DADOS
    ========================================================================= */
 let unidades = [
-  { id: 1, nome: "Senac Paulista - MedioTec", icone: "🎓", cidade: "Paulista - PE", tipo: "MedioTec", endereco: "Rua Oitenta e Dois, N: 30 - Paulista/PE", aulasPorTurno: 7, nota: "Unidade principal do MedioTec Senac Paulista", cor: "cyan" },
-  { id: 2, nome: "Senac Recife - MedioTec", icone: "🏫", cidade: "Recife - PE", tipo: "MedioTec", endereco: "", aulasPorTurno: 7, nota: "", cor: "amber" },
-  { id: 3, nome: "Senac Olinda - MedioTec", icone: "🏢", cidade: "Olinda - PE", tipo: "MedioTec", endereco: "", aulasPorTurno: 7, nota: "", cor: "emerald" },
-  { id: 4, nome: "Faculdade Senac Recife", icone: "🏛️", cidade: "Recife - PE", tipo: "Faculdade", endereco: "", aulasPorTurno: 5, nota: "", cor: "red" }
+  { id: "1", nome: "Senac Paulista - MedioTec", icone: "🎓", cidade: "Paulista - PE", tipo: "MedioTec", endereco: "Rua Oitenta e Dois, N: 30 - Paulista/PE", aulasPorTurno: 7, nota: "Unidade principal do MedioTec Senac Paulista", cor: "cyan" },
+  { id: "2", nome: "Senac Recife - MedioTec", icone: "🏫", cidade: "Recife - PE", tipo: "MedioTec", endereco: "", aulasPorTurno: 7, nota: "", cor: "amber" },
+  { id: "3", nome: "Senac Olinda - MedioTec", icone: "🏢", cidade: "Olinda - PE", tipo: "MedioTec", endereco: "", aulasPorTurno: 7, nota: "", cor: "emerald" },
+  { id: "4", nome: "Faculdade Senac Recife", icone: "🏛️", cidade: "Recife - PE", tipo: "Faculdade", endereco: "", aulasPorTurno: 5, nota: "", cor: "red" }
 ];
 
 const opcoesCoresProf = [
@@ -137,14 +175,14 @@ let dadosPorUnidade = {
 // Lista global de usuários (um usuário pode ter acesso a várias unidades)
 let usuariosGlobais = [
   { id: 1, nome: "Valdir Rodrigues", email: "valdirsenacprojetos@gmail.com", perfil: "Administrador", ativo: true, dataCadastro: "2026-01-23", protegido: true, podeEditarHorarios: true, unidadesVinculadas: [], usuarioLogin: "valdir.rodrigues", senha: "admin123" },
-  { id: 2, nome: "Thomás Barros",    email: "professorthomas87@gmail.com",   perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-26", podeEditarHorarios: false, unidadesVinculadas: [1], usuarioLogin: "thomas.barros", senha: "thomas123" },
-  { id: 3, nome: "Cybelle Cunha",    email: "cybellercunha@uis.pe.senac.br", perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-26", podeEditarHorarios: false, unidadesVinculadas: [1], usuarioLogin: "cybelle.cunha", senha: "cybelle123" },
-  { id: 4, nome: "Heitor Duarte",    email: "duartehhf@gmail.com",           perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-26", podeEditarHorarios: false, unidadesVinculadas: [1], usuarioLogin: "heitor.duarte", senha: "heitor123" },
-  { id: 5, nome: "Altemar Galvão",   email: "altemargalvao.pro@gmail.com",   perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-26", podeEditarHorarios: false, unidadesVinculadas: [1], usuarioLogin: "altemar.galvao", senha: "altemar123" },
-  { id: 6, nome: "João Emanuel",     email: "joaoemanuel.prof@gmail.com",    perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-27", podeEditarHorarios: false, unidadesVinculadas: [1], usuarioLogin: "joao.emanuel", senha: "joao123" },
-  { id: 7, nome: "Ítalo Nunes",      email: "italonunes.prof@gmail.com",     perfil: "Usuário",       ativo: false, dataCadastro: "2026-01-27", podeEditarHorarios: false, unidadesVinculadas: [1], usuarioLogin: "italo.nunes", senha: "italo123" },
-  { id: 8, nome: "Carlos Recife",    email: "carlos@pe.senac.br",            perfil: "Usuário",       ativo: true, dataCadastro: "2026-02-02", podeEditarHorarios: true, unidadesVinculadas: [2], usuarioLogin: "carlos.recife", senha: "carlos123" },
-  { id: 9, nome: "Mariana Olinda",   email: "mariana@pe.senac.br",           perfil: "Usuário",       ativo: true, dataCadastro: "2026-02-05", podeEditarHorarios: true, unidadesVinculadas: [3], usuarioLogin: "mariana.olinda", senha: "mariana123" }
+  { id: 2, nome: "Thomás Barros",    email: "professorthomas87@gmail.com",   perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-26", podeEditarHorarios: false, unidadesVinculadas: ["1"], usuarioLogin: "thomas.barros", senha: "thomas123" },
+  { id: 3, nome: "Cybelle Cunha",    email: "cybellercunha@uis.pe.senac.br", perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-26", podeEditarHorarios: false, unidadesVinculadas: ["1"], usuarioLogin: "cybelle.cunha", senha: "cybelle123" },
+  { id: 4, nome: "Heitor Duarte",    email: "duartehhf@gmail.com",           perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-26", podeEditarHorarios: false, unidadesVinculadas: ["1"], usuarioLogin: "heitor.duarte", senha: "heitor123" },
+  { id: 5, nome: "Altemar Galvão",   email: "altemargalvao.pro@gmail.com",   perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-26", podeEditarHorarios: false, unidadesVinculadas: ["1"], usuarioLogin: "altemar.galvao", senha: "altemar123" },
+  { id: 6, nome: "João Emanuel",     email: "joaoemanuel.prof@gmail.com",    perfil: "Usuário",       ativo: true, dataCadastro: "2026-01-27", podeEditarHorarios: false, unidadesVinculadas: ["1"], usuarioLogin: "joao.emanuel", senha: "joao123" },
+  { id: 7, nome: "Ítalo Nunes",      email: "italonunes.prof@gmail.com",     perfil: "Usuário",       ativo: false, dataCadastro: "2026-01-27", podeEditarHorarios: false, unidadesVinculadas: ["1"], usuarioLogin: "italo.nunes", senha: "italo123" },
+  { id: 8, nome: "Carlos Recife",    email: "carlos@pe.senac.br",            perfil: "Usuário",       ativo: true, dataCadastro: "2026-02-02", podeEditarHorarios: true, unidadesVinculadas: ["2"], usuarioLogin: "carlos.recife", senha: "carlos123" },
+  { id: 9, nome: "Mariana Olinda",   email: "mariana@pe.senac.br",           perfil: "Usuário",       ativo: true, dataCadastro: "2026-02-05", podeEditarHorarios: true, unidadesVinculadas: ["3"], usuarioLogin: "mariana.olinda", senha: "mariana123" }
 ];
 
 /* =========================================================================

@@ -925,6 +925,7 @@ function salvarTurma() {
   const tipoCurso = document.getElementById('turma-curso').value;
   const sala = document.getElementById('turma-sala').value.trim();
   if (!nome) return alert("Preencha o nome da turma!");
+  if (!tipoCurso) return alert("Selecione o curso da turma!");
 
   if (turmaEmEdicao) {
     turmaEmEdicao.nome = nome.toUpperCase();
@@ -977,7 +978,7 @@ function renderTurmas() {
 
   const nomeVal = turmaEmEdicao ? turmaEmEdicao.nome : '';
   const turnoVal = turmaEmEdicao ? turmaEmEdicao.turno : 'Manhã';
-  const cursoVal = turmaEmEdicao ? turmaEmEdicao.tipoCurso : 'MedioTec';
+  const cursoVal = turmaEmEdicao ? turmaEmEdicao.tipoCurso : '';
   const salaVal = turmaEmEdicao ? (turmaEmEdicao.sala || '') : '';
 
   return `
@@ -1009,10 +1010,12 @@ function renderTurmas() {
               </select>
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Tipo de Curso</label>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Curso</label>
               <select id="turma-curso" class="w-full border rounded-xl p-2.5 text-sm focus:outline-orange-500 text-slate-600">
-                <option value="MedioTec" ${cursoVal === 'MedioTec' ? 'selected' : ''}>MedioTec</option>
-                <option value="Faculdade" ${cursoVal === 'Faculdade' ? 'selected' : ''}>Faculdade</option>
+                <option value="" disabled ${!cursoVal ? 'selected' : ''}>Selecione o curso</option>
+                ${d.cursos.map(c => `<option value="${c.nome}" ${cursoVal === c.nome ? 'selected' : ''}>${c.icone} ${c.nome}</option>`).join('')}
+                <option value="MedioTec" ${cursoVal === 'MedioTec' ? 'selected' : ''}>🎓 MedioTec (genérico)</option>
+                <option value="Faculdade" ${cursoVal === 'Faculdade' ? 'selected' : ''}>🏛️ Faculdade (genérico)</option>
               </select>
             </div>
           </div>
@@ -2499,7 +2502,50 @@ function montarMenuHTML() {
   `).join('');
 }
 
+/* =========================================================================
+   PERSISTÊNCIA LOCAL (localStorage do navegador)
+   Enquanto o Firebase não está conectado, isso evita perder dados ao
+   atualizar a página e mantém a sessão de login. Vale só neste navegador/
+   dispositivo — para sincronizar entre dispositivos, é necessário o Firebase.
+   ========================================================================= */
+const CHAVE_ESTADO_LOCAL = 'mediotec_estado_v1';
+
+function salvarEstadoLocal() {
+  try {
+    const estado = {
+      unidades,
+      dadosPorUnidade,
+      usuariosGlobais,
+      unidadeSelecionadaId: unidadeSelecionada ? unidadeSelecionada.id : null,
+      usuarioLogadoId: usuarioLogado ? usuarioLogado.id : null
+    };
+    localStorage.setItem(CHAVE_ESTADO_LOCAL, JSON.stringify(estado));
+  } catch (e) {
+    console.warn('Não foi possível salvar localmente:', e);
+  }
+}
+
+function carregarEstadoLocal() {
+  try {
+    const bruto = localStorage.getItem(CHAVE_ESTADO_LOCAL);
+    if (!bruto) return;
+    const estado = JSON.parse(bruto);
+    if (estado.unidades) unidades = estado.unidades;
+    if (estado.dadosPorUnidade) dadosPorUnidade = estado.dadosPorUnidade;
+    if (estado.usuariosGlobais) usuariosGlobais = estado.usuariosGlobais;
+    if (estado.unidadeSelecionadaId != null) {
+      unidadeSelecionada = unidades.find(u => u.id === estado.unidadeSelecionadaId) || null;
+    }
+    if (estado.usuarioLogadoId != null) {
+      usuarioLogado = usuariosGlobais.find(u => u.id === estado.usuarioLogadoId) || null;
+    }
+  } catch (e) {
+    console.warn('Não foi possível carregar estado local:', e);
+  }
+}
+
 function renderizarAplicacao() {
+  salvarEstadoLocal();
   const container = document.getElementById('app-container');
 
   if (!usuarioLogado) {
@@ -2553,7 +2599,7 @@ function renderizarAplicacao() {
     </aside>
 
     <main class="flex-1 p-8 overflow-y-auto">
-      <div id="conteudo-principal" class="max-w-6xl mx-auto"></div>
+      <div id="conteudo-principal" class="w-full max-w-none"></div>
     </main>
   `;
 
@@ -2577,6 +2623,7 @@ function renderizarAplicacao() {
 }
 
 // Inicialização
+carregarEstadoLocal();
 renderizarAplicacao();
 </script>
 </body>

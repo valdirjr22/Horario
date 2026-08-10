@@ -11,7 +11,8 @@
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import {
     getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut,
-    createUserWithEmailAndPassword, sendPasswordResetEmail
+    createUserWithEmailAndPassword, sendPasswordResetEmail,
+    updatePassword, reauthenticateWithCredential, EmailAuthProvider
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const firebaseConfig = {
@@ -34,7 +35,8 @@
   window.fb = {
     doc, setDoc, getDoc, getDocs, addDoc, deleteDoc, collection, onSnapshot,
     signInWithEmailAndPassword, onAuthStateChanged, signOut,
-    createUserWithEmailAndPassword, sendPasswordResetEmail, getAuth
+    createUserWithEmailAndPassword, sendPasswordResetEmail, getAuth,
+    updatePassword, reauthenticateWithCredential, EmailAuthProvider
   };
   window.firebaseConfigRef = firebaseConfig;
   window.firebaseAppModule = { initializeApp, deleteApp };
@@ -196,6 +198,18 @@ let telaAtual = 'Início';
 let loginUsuarioDigitado = "";
 let loginSenhaDigitada = "";
 let mostrarSenhaLogin = false;
+let erroLogin = "";
+let carregandoApp = false;
+let modoOffline = false;
+let cancelarListenerUnidade = null;
+let timerSincronizacao = null;
+
+/* Estado do modal "Alterar minha senha" */
+let modalMinhaSenhaAberto = false;
+let formSenhaAtualPropria = "";
+let formNovaSenhaPropria = "";
+let formConfirmarNovaSenhaPropria = "";
+let mostrarSenhaPropria = false;
 
 let professorEmEdicao = null;
 let turmaEmEdicao = null;
@@ -348,42 +362,183 @@ function inicializarDisponibilidadesSeNecessario(chave) {
 }
 
 /* =========================================================================
-   LOGIN
+   LOGIN + SINCRONIZAÇÃO COM FIRESTORE
    ========================================================================= */
 function toggleMostrarSenhaLogin() {
   mostrarSenhaLogin = !mostrarSenhaLogin;
   renderizarAplicacao();
 }
 
-function tentarLogin() {
-  const login = loginUsuarioDigitado.trim();
-  const senha = loginSenhaDigitada;
+function estruturaVaziaUnidade() {
+  return { professores: [], turmas: [], cursos: [], disciplinas: [], indisponibilidadesProf: {}, gradeGerada: null, turmaSelecionadaGrade: "" };
+}
 
-  if (!login || !senha) return alert("Preencha usuário e senha!");
+/* Carrega (ou, na primeira vez, semeia) as unidades e seus dados no Firestore */
+async function carregarUnidadesDoFirestore() {
+  const snapUnidades = await window.fb.getDocs(window.fb.collection(window.db, 'unidades'));
 
-  const encontrado = usuariosGlobais.find(u => (u.usuarioLogin || '').toLowerCase() === login.toLowerCase());
-  if (!encontrado) return alert("Usuário não encontrado.");
-  if (!encontrado.ativo) return alert("Este usuário está inativo. Fale com um administrador.");
-  if (encontrado.senha !== senha) return alert("Senha incorreta.");
-
-  usuarioLogado = encontrado;
-  loginUsuarioDigitado = "";
-  loginSenhaDigitada = "";
-  mostrarSenhaLogin = false;
-
-  if (encontrado.perfil === 'Administrador') {
-    unidadeSelecionada = null;
+  if (snapUnidades.empty) {
+    if (usuarioLogado.perfil === 'Administrador') {
+      for (const u of unidades) {
+        await window.fb.setDoc(window.fb.doc(window.db, 'unidades', u.id), {
+          nome: u.nome, tipo: u.tipo, icone: u.icone, cidade: u.cidade,
+          endereco: u.endereco || '', aulasPorTurno: u.aulasPorTurno || 7, nota: u.nota || '', cor: u.cor,
+          dados: dadosPorUnidade[u.id] || estruturaVaziaUnidade()
+        });
+      }
+    }
+    // Se não é admin e não há nada no Firestore ainda, segue com a lista local vazia mesmo
   } else {
-    const acessiveis = unidades.filter(u => (encontrado.unidadesVinculadas || []).includes(u.id));
-    unidadeSelecionada = acessiveis.length === 1 ? acessiveis[0] : null;
+    const novasUnidades = [];
+    const novoDadosPorUnidade = {};
+    snapUnidades.forEach(docSnap => {
+      const d = docSnap.data();
+      novasUnidades.push({
+        id: docSnap.id, nome: d.nome, tipo: d.tipo, icone: d.icone, cidade: d.cidade,
+        endereco: d.endereco || '', aulasPorTurno: d.aulasPorTurno || 7, nota: d.nota || '', cor: d.cor || 'cyan'
+      });
+      novoDadosPorUnidade[docSnap.id] = d.dados || estruturaVaziaUnidade();
+    });
+    unidades = novasUnidades;
+    dadosPorUnidade = novoDadosPorUnidade;
   }
 
+  if (usuarioLogado.perfil === 'Administrador') {
+    try {
+      const snapUsuarios = await window.fb.getDocs(window.fb.collection(window.db, 'usuarios'));
+      const lista = [];
+      snapUsuarios.forEach(docSnap => lista.push({ id: docSnap.id, ...docSnap.data() }));
+      if (lista.length > 0) usuariosGlobais = lista;
+    } catch (e) {
+      console.warn('Não foi possível carregar a lista de usuários:', e);
+    }
+  }
+}
+
+/* Grava (com pequeno atraso, pra não disparar a cada tecla digitada) os dados
+   da unidade selecionada no Firestore */
+function agendarSincronizacaoFirestore() {
+  if (!window.db || !unidadeSelecionada) return;
+  clearTimeout(timerSincronizacao);
+  timerSincronizacao = setTimeout(() => {
+    sincronizarUnidadeComFirestore(unidadeSelecionada.id);
+  }, 900);
+}
+
+async function sincronizarUnidadeComFirestore(unidadeId) {
+  try {
+    const u = unidades.find(x => x.id === unidadeId);
+    if (!u || !dadosPorUnidade[unidadeId]) return;
+    await window.fb.setDoc(window.fb.doc(window.db, 'unidades', unidadeId), {
+      nome: u.nome, tipo: u.tipo, icone: u.icone, cidade: u.cidade,
+      endereco: u.endereco || '', aulasPorTurno: u.aulasPorTurno || 7, nota: u.nota || '', cor: u.cor,
+      dados: dadosPorUnidade[unidadeId]
+    }, { merge: true });
+  } catch (e) {
+    console.warn('Falha ao sincronizar com o Firestore:', e);
+  }
+}
+
+/* Ouve mudanças feitas em outros dispositivos/navegadores na unidade aberta */
+function iniciarListenerUnidade(unidadeId) {
+  if (!window.db) return;
+  pararListenerUnidade();
+  cancelarListenerUnidade = window.fb.onSnapshot(window.fb.doc(window.db, 'unidades', unidadeId), (docSnap) => {
+    if (!docSnap.exists()) return;
+    const d = docSnap.data();
+    if (d.dados) dadosPorUnidade[unidadeId] = d.dados;
+    if (unidadeSelecionada && unidadeSelecionada.id === unidadeId) {
+      renderizarAplicacao();
+    }
+  }, (erro) => console.warn('Listener da unidade falhou:', erro));
+}
+
+function pararListenerUnidade() {
+  if (cancelarListenerUnidade) { cancelarListenerUnidade(); cancelarListenerUnidade = null; }
+}
+
+function definirUnidadeAposLogin() {
+  if (usuarioLogado.perfil === 'Administrador') {
+    unidadeSelecionada = null;
+  } else {
+    const acessiveis = unidades.filter(u => (usuarioLogado.unidadesVinculadas || []).includes(u.id));
+    unidadeSelecionada = acessiveis.length === 1 ? acessiveis[0] : null;
+  }
+  if (unidadeSelecionada) iniciarListenerUnidade(unidadeSelecionada.id);
+}
+
+async function tentarLogin() {
+  const email = loginUsuarioDigitado.trim();
+  const senha = loginSenhaDigitada;
+  erroLogin = "";
+
+  if (!email || !senha) { erroLogin = "Preencha e-mail e senha!"; renderizarAplicacao(); return; }
+
+  if (!window.auth) {
+    return tentarLoginOffline(email, senha);
+  }
+
+  carregandoApp = true;
+  renderizarAplicacao();
+
+  try {
+    const cred = await window.fb.signInWithEmailAndPassword(window.auth, email, senha);
+    const uid = cred.user.uid;
+    const snap = await window.fb.getDoc(window.fb.doc(window.db, 'usuarios', uid));
+
+    if (!snap.exists()) {
+      erroLogin = "Sua conta não está registrada no sistema. Fale com um administrador.";
+      await window.fb.signOut(window.auth);
+      carregandoApp = false; renderizarAplicacao(); return;
+    }
+    const dadosUsuario = snap.data();
+    if (dadosUsuario.ativo === false) {
+      erroLogin = "Este usuário está inativo. Fale com um administrador.";
+      await window.fb.signOut(window.auth);
+      carregandoApp = false; renderizarAplicacao(); return;
+    }
+
+    usuarioLogado = { id: uid, ...dadosUsuario };
+    await carregarUnidadesDoFirestore();
+    definirUnidadeAposLogin();
+
+    loginUsuarioDigitado = ""; loginSenhaDigitada = ""; mostrarSenhaLogin = false;
+    telaAtual = 'Início';
+    carregandoApp = false;
+    renderizarAplicacao();
+  } catch (e) {
+    carregandoApp = false;
+    const mapaErros = {
+      'auth/invalid-credential': 'E-mail ou senha incorretos.',
+      'auth/wrong-password': 'E-mail ou senha incorretos.',
+      'auth/user-not-found': 'E-mail ou senha incorretos.',
+      'auth/invalid-email': 'E-mail inválido.',
+      'auth/too-many-requests': 'Muitas tentativas. Aguarde um pouco e tente novamente.'
+    };
+    erroLogin = mapaErros[e.code] || ("Erro ao entrar: " + e.message);
+    renderizarAplicacao();
+  }
+}
+
+function tentarLoginOffline(email, senha) {
+  modoOffline = true;
+  carregarEstadoLocal();
+  const encontrado = usuariosGlobais.find(u => (u.email || '').toLowerCase() === email.toLowerCase());
+  if (!encontrado) { erroLogin = "Sem conexão com o Firebase e usuário não encontrado localmente."; renderizarAplicacao(); return; }
+  if (!encontrado.ativo) { erroLogin = "Este usuário está inativo."; renderizarAplicacao(); return; }
+  if (encontrado.senha !== senha) { erroLogin = "Senha incorreta."; renderizarAplicacao(); return; }
+
+  usuarioLogado = encontrado;
+  definirUnidadeAposLogin();
+  loginUsuarioDigitado = ""; loginSenhaDigitada = ""; mostrarSenhaLogin = false;
   telaAtual = 'Início';
   renderizarAplicacao();
 }
 
-function sairDoSistema() {
+async function sairDoSistema() {
   if (!confirm("Deseja realmente sair do sistema?")) return;
+  pararListenerUnidade();
+  if (window.auth) { try { await window.fb.signOut(window.auth); } catch (e) { /* ignora */ } }
   usuarioLogado = null;
   unidadeSelecionada = null;
   resetarEstadoDeTela();
@@ -391,18 +546,27 @@ function sairDoSistema() {
 }
 
 function renderizarLogin() {
+  if (carregandoApp) {
+    return `
+      <div class="flex flex-col items-center justify-center w-full min-h-screen bg-gradient-to-br from-cyan-500 to-blue-700 text-white gap-3">
+        <div class="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+        <p class="text-sm font-semibold">Entrando...</p>
+      </div>
+    `;
+  }
   return `
     <div class="flex flex-col items-center justify-center w-full min-h-screen p-6 bg-gradient-to-br from-cyan-500 to-blue-700 text-white">
       <div class="max-w-sm w-full bg-white text-slate-800 rounded-3xl shadow-2xl p-8 space-y-5">
         <div class="text-center space-y-2">
           <div class="w-16 h-16 bg-cyan-100 text-cyan-600 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-inner">📅</div>
           <h1 class="text-xl font-black">MedioTec - Sistema de Horários</h1>
-          <p class="text-xs text-slate-500 font-medium">Entre com seu usuário e senha para acessar</p>
+          <p class="text-xs text-slate-500 font-medium">Entre com seu e-mail e senha para acessar</p>
         </div>
+        ${erroLogin ? `<div class="bg-red-50 border border-red-200 text-red-600 text-xs font-semibold rounded-xl p-2.5 text-center">${erroLogin}</div>` : ''}
         <div class="space-y-3">
           <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Usuário</label>
-            <input type="text" oninput="loginUsuarioDigitado = this.value;" value="${loginUsuarioDigitado}" placeholder="ex: valdir.rodrigues" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500">
+            <label class="block text-xs font-bold text-slate-600 mb-1">E-mail</label>
+            <input type="email" oninput="loginUsuarioDigitado = this.value;" value="${loginUsuarioDigitado}" placeholder="voce@mediotec.app" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500">
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-600 mb-1">Senha</label>
@@ -414,6 +578,7 @@ function renderizarLogin() {
           <button onclick="tentarLogin()" class="w-full bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-bold py-3 rounded-xl text-sm shadow-md transition">Entrar</button>
         </div>
         <p class="text-[10px] text-slate-400 text-center">Esqueceu sua senha? Fale com um administrador do sistema.</p>
+        ${!window.auth ? `<p class="text-[10px] text-amber-600 text-center font-semibold">⚠️ Sem conexão com o Firebase — funcionando no modo local deste navegador.</p>` : ''}
       </div>
     </div>
   `;
@@ -425,15 +590,109 @@ function renderizarLogin() {
 function selecionarUnidade(idUnidade) {
   unidadeSelecionada = unidades.find(u => u.id === idUnidade);
   resetarEstadoDeTela();
+  if (unidadeSelecionada) iniciarListenerUnidade(unidadeSelecionada.id);
   renderizarAplicacao();
 }
 
 function trocarUnidade() {
+  pararListenerUnidade();
   unidadeSelecionada = null;
   resetarEstadoDeTela();
   renderizarAplicacao();
 }
 
+/* =========================================================================
+   ALTERAR MINHA SENHA (sem depender de e-mail de redefinição)
+   ========================================================================= */
+function abrirModalMinhaSenha() {
+  formSenhaAtualPropria = "";
+  formNovaSenhaPropria = "";
+  formConfirmarNovaSenhaPropria = "";
+  mostrarSenhaPropria = false;
+  modalMinhaSenhaAberto = true;
+  navegar(telaAtual);
+}
+
+function fecharModalMinhaSenha() {
+  modalMinhaSenhaAberto = false;
+  navegar(telaAtual);
+}
+
+function toggleMostrarSenhaPropria() {
+  mostrarSenhaPropria = !mostrarSenhaPropria;
+  navegar(telaAtual);
+}
+
+async function salvarNovaSenhaPropria() {
+  const atual = formSenhaAtualPropria;
+  const nova = formNovaSenhaPropria;
+  const confirmar = formConfirmarNovaSenhaPropria;
+
+  if (!atual || !nova) return alert("Preencha a senha atual e a nova senha!");
+  if (nova.length < 6) return alert("A nova senha precisa ter pelo menos 6 caracteres!");
+  if (nova !== confirmar) return alert("A confirmação não é igual à nova senha!");
+
+  if (!window.auth || !window.auth.currentUser) {
+    alert("Sem conexão com o Firebase no momento — não é possível trocar a senha agora.");
+    return;
+  }
+
+  try {
+    const credencial = window.fb.EmailAuthProvider.credential(usuarioLogado.email, atual);
+    await window.fb.reauthenticateWithCredential(window.auth.currentUser, credencial);
+    await window.fb.updatePassword(window.auth.currentUser, nova);
+    alert("Senha alterada com sucesso!");
+    fecharModalMinhaSenha();
+  } catch (e) {
+    const mapaErros = {
+      'auth/wrong-password': 'Senha atual incorreta.',
+      'auth/invalid-credential': 'Senha atual incorreta.',
+      'auth/weak-password': 'Senha muito fraca (mínimo 6 caracteres).',
+      'auth/requires-recent-login': 'Por segurança, saia e entre novamente antes de trocar a senha.'
+    };
+    alert(mapaErros[e.code] || ("Erro ao trocar a senha: " + e.message));
+  }
+}
+
+function renderModalMinhaSenha() {
+  if (!modalMinhaSenhaAberto) return '';
+  const tipoCampo = mostrarSenhaPropria ? 'text' : 'password';
+  return `
+    <div class="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4" onmousedown="if(event.target===this) fecharModalMinhaSenha();">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm" onmousedown="event.stopPropagation();">
+        <div class="flex items-center justify-between p-5 border-b border-slate-100">
+          <h3 class="font-bold text-slate-800 text-base">🔒 Alterar Minha Senha</h3>
+          <button onclick="fecharModalMinhaSenha()" class="text-slate-400 hover:text-slate-600 text-lg leading-none px-1">✕</button>
+        </div>
+        <div class="p-5 space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Senha Atual</label>
+            <input type="${tipoCampo}" oninput="formSenhaAtualPropria = this.value;" value="${formSenhaAtualPropria}" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Nova Senha</label>
+            <input type="${tipoCampo}" oninput="formNovaSenhaPropria = this.value;" value="${formNovaSenhaPropria}" placeholder="Mínimo 6 caracteres" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Confirmar Nova Senha</label>
+            <input type="${tipoCampo}" oninput="formConfirmarNovaSenhaPropria = this.value;" value="${formConfirmarNovaSenhaPropria}" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500">
+          </div>
+          <label class="flex items-center gap-2 text-xs text-slate-500 cursor-pointer select-none">
+            <input type="checkbox" onclick="toggleMostrarSenhaPropria()" ${mostrarSenhaPropria ? 'checked' : ''}> Mostrar senhas
+          </label>
+        </div>
+        <div class="flex gap-3 p-5 border-t border-slate-100">
+          <button onclick="salvarNovaSenhaPropria()" class="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition">✓ Salvar Nova Senha</button>
+          <button onclick="fecharModalMinhaSenha()" class="flex-1 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold py-2.5 rounded-xl text-xs transition">✕ Cancelar</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* =========================================================================
+   SELEÇÃO DE UNIDADE
+   ========================================================================= */
 function resetarEstadoDeTela() {
   telaAtual = 'Início';
   professorEmEdicao = null;
@@ -524,48 +783,57 @@ function fecharModalUnidade() {
 function selecionarIconeUnidade(ic) { formIconeUnidade = ic; navegar('Unidades'); }
 function selecionarCorUnidade(cor) { formCorUnidade = cor; navegar('Unidades'); }
 
-function salvarUnidade() {
+async function salvarUnidade() {
   const nome = formNomeUnidade.trim();
   const cidade = formCidadeUnidade.trim();
   if (!nome || !cidade) return alert("Preencha ao menos o nome e a cidade da unidade!");
 
+  const dadosUnidade = {
+    nome, tipo: formTipoUnidade, icone: formIconeUnidade, cidade,
+    endereco: formEnderecoUnidade.trim(), aulasPorTurno: parseInt(formAulasPorTurnoUnidade) || 7,
+    nota: formNotaUnidade.trim(), cor: formCorUnidade
+  };
+
   if (unidadeEmEdicao) {
-    unidadeEmEdicao.nome = nome;
-    unidadeEmEdicao.tipo = formTipoUnidade;
-    unidadeEmEdicao.icone = formIconeUnidade;
-    unidadeEmEdicao.cidade = cidade;
-    unidadeEmEdicao.endereco = formEnderecoUnidade.trim();
-    unidadeEmEdicao.aulasPorTurno = parseInt(formAulasPorTurnoUnidade) || 7;
-    unidadeEmEdicao.nota = formNotaUnidade.trim();
-    unidadeEmEdicao.cor = formCorUnidade;
+    Object.assign(unidadeEmEdicao, dadosUnidade);
+    if (window.db) {
+      try { await window.fb.setDoc(window.fb.doc(window.db, 'unidades', unidadeEmEdicao.id), dadosUnidade, { merge: true }); }
+      catch (e) { alert("Salvo localmente, mas houve erro ao sincronizar com o Firestore: " + e.message); }
+    }
   } else {
-    const novoId = unidades.length > 0 ? Math.max(...unidades.map(u => u.id)) + 1 : 1;
-    unidades.push({
-      id: novoId,
-      nome,
-      tipo: formTipoUnidade,
-      icone: formIconeUnidade,
-      cidade,
-      endereco: formEnderecoUnidade.trim(),
-      aulasPorTurno: parseInt(formAulasPorTurnoUnidade) || 7,
-      nota: formNotaUnidade.trim(),
-      cor: formCorUnidade
-    });
-    dadosPorUnidade[novoId] = {
-      professores: [], turmas: [], cursos: [], disciplinas: [],
-      indisponibilidadesProf: {}, gradeGerada: null, turmaSelecionadaGrade: ""
-    };
+    const novaUnidadeDados = estruturaVaziaUnidade();
+    let novoId;
+    if (window.db) {
+      try {
+        const refNovo = await window.fb.addDoc(window.fb.collection(window.db, 'unidades'), { ...dadosUnidade, dados: novaUnidadeDados });
+        novoId = refNovo.id;
+      } catch (e) {
+        alert("Erro ao criar unidade no Firestore: " + e.message);
+        return;
+      }
+    } else {
+      novoId = 'local_' + Date.now();
+    }
+    unidades.push({ id: novoId, ...dadosUnidade });
+    dadosPorUnidade[novoId] = novaUnidadeDados;
   }
   modalUnidadeAberto = false;
   unidadeEmEdicao = null;
   navegar('Unidades');
 }
 
-function removerUnidade(id) {
+async function removerUnidade(id) {
   if (unidades.length <= 1) { alert("Não é possível remover a única unidade do sistema."); return; }
   const alvo = unidades.find(u => u.id === id);
   if (!alvo) return;
   if (!confirm(`Remover a unidade "${alvo.nome}"? Todos os dados dela (professores, turmas, disciplinas, grades) serão perdidos.`)) return;
+
+  if (window.db) {
+    try { await window.fb.deleteDoc(window.fb.doc(window.db, 'unidades', id)); }
+    catch (e) { alert("Erro ao remover no Firestore: " + e.message); return; }
+  }
+
+  if (unidadeSelecionada && unidadeSelecionada.id === id) pararListenerUnidade();
 
   unidades = unidades.filter(u => u.id !== id);
   delete dadosPorUnidade[id];
@@ -2264,50 +2532,85 @@ function toggleUnidadeVinculada(idUnidade) {
   navegar('Usuários');
 }
 
-function salvarUsuario() {
+async function salvarUsuario() {
   const nome = formNome.trim();
   const email = formEmail.trim();
-  const login = formUsuarioLogin.trim();
   const senha = formSenha;
 
-  if (!nome || !email) return alert("Preencha todos os campos obrigatórios do usuário!");
-  if (!login) return alert("Informe um usuário de login para o acesso ao sistema!");
-  if (!usuarioEmEdicao && !senha) return alert("Crie uma senha de acesso para o novo usuário!");
-  if (loginJaExiste(login, usuarioEmEdicao ? usuarioEmEdicao.id : null)) {
-    return alert("Já existe um usuário com esse login. Escolha outro.");
-  }
+  if (!nome || !email) return alert("Preencha nome e e-mail!");
 
   if (usuarioEmEdicao) {
-    usuarioEmEdicao.nome = nome;
-    usuarioEmEdicao.email = email;
-    usuarioEmEdicao.perfil = formPerfil;
-    usuarioEmEdicao.podeEditarHorarios = formPodeEditarHorarios;
-    usuarioEmEdicao.unidadesVinculadas = [...formUnidadesVinculadas];
-    usuarioEmEdicao.usuarioLogin = login;
-    if (senha) usuarioEmEdicao.senha = senha;
-  } else {
-    usuariosGlobais.push({
-      id: Date.now(),
-      nome,
-      email,
-      perfil: formPerfil,
-      ativo: true,
-      dataCadastro: new Date().toISOString().slice(0, 10),
+    const dadosAtualizados = {
+      nome, email, perfil: formPerfil,
       podeEditarHorarios: formPodeEditarHorarios,
-      unidadesVinculadas: [...formUnidadesVinculadas],
-      usuarioLogin: login,
-      senha: senha
-    });
+      unidadesVinculadas: [...formUnidadesVinculadas]
+    };
+    if (window.db) {
+      try {
+        await window.fb.setDoc(window.fb.doc(window.db, 'usuarios', usuarioEmEdicao.id), dadosAtualizados, { merge: true });
+      } catch (e) {
+        alert("Erro ao salvar no Firestore: " + e.message);
+        return;
+      }
+    }
+    Object.assign(usuarioEmEdicao, dadosAtualizados);
+  } else {
+    if (!senha || senha.length < 6) return alert("Crie uma senha de acesso com pelo menos 6 caracteres!");
+    if (!window.db || !window.firebaseAppModule) {
+      alert("Sem conexão com o Firebase no momento — não é possível criar um novo acesso agora.");
+      return;
+    }
+    try {
+      // Cria a conta numa instância secundária do Firebase, pra não deslogar o admin atual
+      const secApp = window.firebaseAppModule.initializeApp(window.firebaseConfigRef, "Secundario_" + Date.now());
+      const secAuth = window.fb.getAuth(secApp);
+      const cred = await window.fb.createUserWithEmailAndPassword(secAuth, email, senha);
+      const novoUid = cred.user.uid;
+      await window.fb.signOut(secAuth);
+      await window.firebaseAppModule.deleteApp(secApp);
+
+      const novoUsuario = {
+        nome, email, perfil: formPerfil, ativo: true,
+        dataCadastro: new Date().toISOString().slice(0, 10),
+        podeEditarHorarios: formPodeEditarHorarios,
+        unidadesVinculadas: [...formUnidadesVinculadas]
+      };
+      await window.fb.setDoc(window.fb.doc(window.db, 'usuarios', novoUid), novoUsuario);
+      usuariosGlobais.push({ id: novoUid, ...novoUsuario });
+    } catch (e) {
+      const mapaErros = {
+        'auth/email-already-in-use': 'Já existe uma conta com esse e-mail.',
+        'auth/invalid-email': 'E-mail inválido.',
+        'auth/weak-password': 'Senha muito fraca (mínimo 6 caracteres).'
+      };
+      alert(mapaErros[e.code] || ("Erro ao criar o usuário: " + e.message));
+      return;
+    }
   }
   modalUsuarioAberto = false;
   usuarioEmEdicao = null;
   navegar('Usuários');
 }
 
-function removerUsuario(id) {
+async function enviarRedefinicaoSenha() {
+  if (!usuarioEmEdicao) return;
+  if (!window.auth) { alert("Sem conexão com o Firebase no momento."); return; }
+  try {
+    await window.fb.sendPasswordResetEmail(window.auth, usuarioEmEdicao.email);
+    alert("E-mail de redefinição de senha enviado para " + usuarioEmEdicao.email + ".");
+  } catch (e) {
+    alert("Erro ao enviar e-mail de redefinição: " + e.message);
+  }
+}
+
+async function removerUsuario(id) {
   const alvo = usuariosGlobais.find(u => u.id === id);
   if (alvo && alvo.protegido) { alert("Este usuário administrador não pode ser removido."); return; }
-  if (!confirm("Remover este usuário?")) return;
+  if (!confirm("Remover este usuário? Ele perde o acesso ao sistema imediatamente (a conta de login precisa ser removida à parte, no Firebase Authentication).")) return;
+  if (window.db) {
+    try { await window.fb.deleteDoc(window.fb.doc(window.db, 'usuarios', id)); }
+    catch (e) { alert("Erro ao remover no Firestore: " + e.message); return; }
+  }
   usuariosGlobais = usuariosGlobais.filter(item => item.id !== id);
   navegar('Usuários');
 }
@@ -2352,19 +2655,24 @@ function renderModalUsuario() {
           <div class="pt-1 border-t border-slate-100">
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-3 mb-2">🔑 Acesso ao Sistema</p>
           </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Usuário (login)</label>
-            <input type="text" oninput="formUsuarioLogin = this.value;" value="${formUsuarioLogin}" placeholder="ex: maria.souza" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500">
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Senha</label>
-            <div class="relative">
-              <input type="${mostrarSenhaModal ? 'text' : 'password'}" oninput="formSenha = this.value;" value="${formSenha}" placeholder="${usuarioEmEdicao ? 'Deixe em branco para manter a senha atual' : 'Crie uma senha de acesso'}" class="w-full border border-slate-200 rounded-xl p-2.5 pr-9 text-sm focus:outline-cyan-500">
-              <button type="button" onclick="toggleMostrarSenhaModal()" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 text-xs">${mostrarSenhaModal ? '🙈' : '👁️'}</button>
+          ${usuarioEmEdicao ? `
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-3">
+              <p class="text-[11px] text-slate-500">O login é feito com o e-mail acima. Para trocar a senha, envie um link de redefinição.</p>
+              <button type="button" onclick="enviarRedefinicaoSenha()" class="flex-shrink-0 bg-white border border-cyan-300 text-cyan-600 hover:bg-cyan-50 font-bold text-[11px] px-3 py-2 rounded-lg transition whitespace-nowrap">📧 Redefinir senha</button>
             </div>
-          </div>
+          ` : `
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Senha</label>
+              <div class="relative">
+                <input type="${mostrarSenhaModal ? 'text' : 'password'}" oninput="formSenha = this.value;" value="${formSenha}" placeholder="Crie uma senha de acesso (mín. 6 caracteres)" class="w-full border border-slate-200 rounded-xl p-2.5 pr-9 text-sm focus:outline-cyan-500">
+                <button type="button" onclick="toggleMostrarSenhaModal()" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 text-xs">${mostrarSenhaModal ? '🙈' : '👁️'}</button>
+              </div>
+              <p class="text-[10px] text-slate-400 mt-1">O login desse usuário será feito com o e-mail informado acima.</p>
+            </div>
+          `}
 
           <div>
+
             <label class="block text-xs font-bold text-slate-600 mb-1">Função</label>
             <select onchange="formPerfil = this.value; navegar('Usuários');" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-cyan-500 text-slate-700">
               <option value="Administrador" ${isAdmin ? 'selected' : ''}>Administrador</option>
@@ -2584,6 +2892,7 @@ function carregarEstadoLocal() {
 
 function renderizarAplicacao() {
   salvarEstadoLocal();
+  agendarSincronizacaoFirestore();
   const container = document.getElementById('app-container');
 
   if (!usuarioLogado) {
@@ -2630,6 +2939,9 @@ function renderizarAplicacao() {
             <p class="font-semibold text-slate-800 truncate">${usuarioLogado.nome}</p>
           </div>
         </div>
+        <button onclick="abrirModalMinhaSenha()" class="w-full text-xs font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 rounded-xl py-2 mb-2 transition">
+          🔒 Alterar Senha
+        </button>
         <button onclick="sairDoSistema()" class="w-full text-sm font-semibold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-xl py-2 shadow-md transition">
           🚪 Sair
         </button>
@@ -2639,6 +2951,7 @@ function renderizarAplicacao() {
     <main class="flex-1 p-8 overflow-y-auto">
       <div id="conteudo-principal" class="w-full max-w-none"></div>
     </main>
+    ${renderModalMinhaSenha()}
   `;
 
   const conteudoEl = document.getElementById('conteudo-principal');
@@ -2661,8 +2974,57 @@ function renderizarAplicacao() {
 }
 
 // Inicialização
-carregarEstadoLocal();
-renderizarAplicacao();
+async function tratarMudancaDeAuth(user) {
+  if (user && !usuarioLogado) {
+    carregandoApp = true;
+    renderizarAplicacao();
+    try {
+      const snap = await window.fb.getDoc(window.fb.doc(window.db, 'usuarios', user.uid));
+      if (snap.exists() && snap.data().ativo !== false) {
+        usuarioLogado = { id: user.uid, ...snap.data() };
+        await carregarUnidadesDoFirestore();
+        definirUnidadeAposLogin();
+      } else {
+        await window.fb.signOut(window.auth);
+      }
+    } catch (e) {
+      console.warn('Falha ao restaurar sessão:', e);
+    }
+    carregandoApp = false;
+    renderizarAplicacao();
+  } else if (!user && usuarioLogado && !modoOffline) {
+    usuarioLogado = null;
+    unidadeSelecionada = null;
+    renderizarAplicacao();
+  } else if (!user) {
+    carregandoApp = false;
+    renderizarAplicacao();
+  }
+}
+
+function iniciarComFirebase() {
+  window.fb.onAuthStateChanged(window.auth, tratarMudancaDeAuth);
+}
+
+function iniciarModoLocal() {
+  modoOffline = true;
+  carregarEstadoLocal();
+  renderizarAplicacao();
+}
+
+if (window.auth) {
+  iniciarComFirebase();
+} else {
+  carregandoApp = true;
+  window.addEventListener('firebase-pronto', iniciarComFirebase, { once: true });
+  setTimeout(() => {
+    if (!usuarioLogado && !window.auth) {
+      window.removeEventListener('firebase-pronto', iniciarComFirebase);
+      iniciarModoLocal();
+    }
+  }, 4000);
+  renderizarAplicacao();
+}
 </script>
 </body>
 </html>

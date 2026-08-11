@@ -719,7 +719,7 @@ function renderizarSelecaoUnidade() {
         <div class="text-center space-y-2">
           <div class="w-16 h-16 bg-cyan-100 text-cyan-600 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-inner">🏢</div>
           <h1 class="text-2xl font-black">MedioTec - Sistema de Horários</h1>
-          <p class="text-xs text-slate-500 font-medium">Olá, ${usuarioLogado.nome.split(' ')[0]}! Selecione abaixo a unidade escolar para gerenciar:</p>
+          <p class="text-xs text-slate-500 font-medium">Olá, ${(usuarioLogado.nome || usuarioLogado.email || 'usuário').split(' ')[0]}! Selecione abaixo a unidade escolar para gerenciar:</p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2067,7 +2067,7 @@ function renderCardTurmaGrade(turma, d) {
     <div class="bg-white rounded-2xl border-2 border-slate-100 shadow-sm p-6 space-y-4">
       <div class="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <p class="text-cyan-600 font-black text-xs tracking-wide uppercase">${unidadeSelecionada.nome.split(' - ')[0]}</p>
+          <p class="text-cyan-600 font-black text-xs tracking-wide uppercase">${(unidadeSelecionada.nome || '').split(' - ')[0]}</p>
           <h3 class="text-xl font-black text-slate-800">${turma.nome}</h3>
         </div>
         <div class="flex gap-2 flex-shrink-0 print:hidden">
@@ -2895,17 +2895,18 @@ function renderizarAplicacao() {
   agendarSincronizacaoFirestore();
   const container = document.getElementById('app-container');
 
-  if (!usuarioLogado) {
-    container.innerHTML = renderizarLogin();
-    return;
-  }
+  try {
+    if (!usuarioLogado) {
+      container.innerHTML = renderizarLogin();
+      return;
+    }
 
-  if (!unidadeSelecionada) {
-    container.innerHTML = renderizarSelecaoUnidade();
-    return;
-  }
+    if (!unidadeSelecionada) {
+      container.innerHTML = renderizarSelecaoUnidade();
+      return;
+    }
 
-  container.innerHTML = `
+    container.innerHTML = `
     <aside class="w-64 bg-white border-r-2 border-cyan-200 flex flex-col justify-between p-3 shadow-sm min-h-screen">
       <div>
         <div class="border-b-2 border-cyan-200 pb-3 mb-3 bg-gradient-to-r from-cyan-500 to-cyan-600 p-4 rounded-xl text-white shadow-md">
@@ -2971,6 +2972,20 @@ function renderizarAplicacao() {
 
   const renderFn = mapaTelas[telaAtual] || renderInicio;
   conteudoEl.innerHTML = renderFn();
+  } catch (erro) {
+    console.error('Erro ao renderizar a aplicação:', erro);
+    carregandoApp = false;
+    container.innerHTML = `
+      <div class="flex flex-col items-center justify-center w-full min-h-screen p-6 bg-gradient-to-br from-red-50 to-orange-50 gap-4">
+        <div class="max-w-md w-full bg-white rounded-2xl shadow-lg border-2 border-red-200 p-6 text-center space-y-3">
+          <div class="text-4xl">⚠️</div>
+          <h2 class="font-bold text-slate-800">Algo deu errado ao carregar a tela</h2>
+          <p class="text-xs text-slate-500">${erro.message || 'Erro desconhecido.'}</p>
+          <button onclick="location.reload()" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-md transition">🔄 Recarregar Página</button>
+        </div>
+      </div>
+    `;
+  }
 }
 
 // Inicialização

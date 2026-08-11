@@ -724,7 +724,7 @@ function renderizarSelecaoUnidade() {
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           ${unidadesAcessiveis.map(u => `
-            <button onclick="selecionarUnidade(${u.id})" class="flex flex-col items-center text-center gap-2.5 p-6 rounded-2xl border-2 border-slate-100 hover:border-cyan-400 hover:bg-cyan-50/50 hover:-translate-y-0.5 transition group shadow-sm">
+            <button onclick="selecionarUnidade('${u.id}')" class="flex flex-col items-center text-center gap-2.5 p-6 rounded-2xl border-2 border-slate-100 hover:border-cyan-400 hover:bg-cyan-50/50 hover:-translate-y-0.5 transition group shadow-sm">
               <div class="w-14 h-14 bg-cyan-50 group-hover:bg-cyan-500 group-hover:text-white text-cyan-600 rounded-2xl flex items-center justify-center text-3xl transition shadow-inner">${u.icone}</div>
               <h4 class="font-extrabold text-slate-800 text-sm group-hover:text-cyan-600 transition">${u.nome}</h4>
               <p class="text-[11px] text-slate-400 font-medium">📍 ${u.cidade}</p>
@@ -961,10 +961,10 @@ function renderUnidades() {
                 <div class="flex-1"></div>
 
                 <div class="flex gap-2 pt-1">
-                  <button onclick="abrirModalEditarUnidade(${u.id})" class="flex-1 flex items-center justify-center gap-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold py-2 rounded-xl text-xs transition">✏️ Editar</button>
-                  <button onclick="removerUnidade(${u.id})" class="border border-red-200 hover:bg-red-50 text-red-500 font-bold py-2 px-3 rounded-xl text-xs transition">🗑️</button>
+                  <button onclick="abrirModalEditarUnidade('${u.id}')" class="flex-1 flex items-center justify-center gap-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold py-2 rounded-xl text-xs transition">✏️ Editar</button>
+                  <button onclick="removerUnidade('${u.id}')" class="border border-red-200 hover:bg-red-50 text-red-500 font-bold py-2 px-3 rounded-xl text-xs transition">🗑️</button>
                 </div>
-                ${!ativa ? `<button onclick="selecionarUnidade(${u.id})" class="w-full text-center text-cyan-600 border border-cyan-300 hover:bg-cyan-50 rounded-xl py-1.5 font-bold transition text-xs">Selecionar Unidade</button>` : ''}
+                ${!ativa ? `<button onclick="selecionarUnidade('${u.id}')" class="w-full text-center text-cyan-600 border border-cyan-300 hover:bg-cyan-50 rounded-xl py-1.5 font-bold transition text-xs">Selecionar Unidade</button>` : ''}
               </div>
             </div>
           `;
@@ -2709,7 +2709,7 @@ function renderModalUsuario() {
                       <p class="text-[10px] text-slate-400">${u.tipo}</p>
                     </div>
                   </div>
-                  ${renderSwitch(formUnidadesVinculadas.includes(u.id), `toggleUnidadeVinculada(${u.id})`, isAdmin)}
+                  ${renderSwitch(formUnidadesVinculadas.includes(u.id), `toggleUnidadeVinculada('${u.id}')`, isAdmin)}
                 </div>
               `).join('')}
             </div>
@@ -2762,8 +2762,8 @@ function renderUsuarios() {
           <span>📅</span><span>${formatarDataBR(u.dataCadastro)}</span>
         </div>
         <div class="flex items-center gap-1.5">
-          <button onclick="abrirModalEditarUsuario(${u.id})" class="p-1.5 text-cyan-600 hover:bg-cyan-50 rounded-lg transition">✏️</button>
-          ${u.protegido ? '' : `<button onclick="removerUsuario(${u.id})" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition">🗑️</button>`}
+          <button onclick="abrirModalEditarUsuario('${u.id}')" class="p-1.5 text-cyan-600 hover:bg-cyan-50 rounded-lg transition">✏️</button>
+          ${u.protegido ? '' : `<button onclick="removerUsuario('${u.id}')" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition">🗑️</button>`}
         </div>
       </div>
     `;

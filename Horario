@@ -48,6 +48,7 @@
 <body class="bg-gradient-to-br from-cyan-50 via-white to-orange-50 min-h-screen font-sans">
 
 <div id="app-container" class="flex w-full min-h-screen"></div>
+<div id="badge-sincronizacao"></div>
 
 <script>
 /* =========================================================================
@@ -420,24 +421,73 @@ async function carregarUnidadesDoFirestore() {
 function agendarSincronizacaoFirestore() {
   if (!window.db || !unidadeSelecionada) return;
   clearTimeout(timerSincronizacao);
+  atualizarBadgeSincronizacao('pendente');
   timerSincronizacao = setTimeout(() => {
     sincronizarUnidadeComFirestore(unidadeSelecionada.id);
-  }, 900);
+  }, 400);
+}
+
+/* Força a gravação imediata (sem esperar o atraso), usada quando a página
+   está prestes a ser fechada/atualizada, pra não perder dados recentes */
+function flushSincronizacaoImediata() {
+  if (!window.db || !unidadeSelecionada) return;
+  clearTimeout(timerSincronizacao);
+  sincronizarUnidadeComFirestore(unidadeSelecionada.id);
 }
 
 async function sincronizarUnidadeComFirestore(unidadeId) {
   try {
     const u = unidades.find(x => x.id === unidadeId);
     if (!u || !dadosPorUnidade[unidadeId]) return;
+    atualizarBadgeSincronizacao('salvando');
+
+    // Remove qualquer "undefined" (o Firestore rejeita a gravação inteira se achar um)
+    const dadosLimpos = JSON.parse(JSON.stringify(dadosPorUnidade[unidadeId]));
+
     await window.fb.setDoc(window.fb.doc(window.db, 'unidades', unidadeId), {
       nome: u.nome, tipo: u.tipo, icone: u.icone, cidade: u.cidade,
       endereco: u.endereco || '', aulasPorTurno: u.aulasPorTurno || 7, nota: u.nota || '', cor: u.cor,
-      dados: dadosPorUnidade[unidadeId]
+      dados: dadosLimpos
     }, { merge: true });
+
+    atualizarBadgeSincronizacao('salvo');
   } catch (e) {
     console.warn('Falha ao sincronizar com o Firestore:', e);
+    atualizarBadgeSincronizacao('erro', e.message);
   }
 }
+
+/* Indicador visual (canto da tela) do status da gravação — não depende do
+   ciclo normal de renderização, pra não atrapalhar formulários abertos */
+let timerBadgeSincronizacao = null;
+function atualizarBadgeSincronizacao(status, detalhe) {
+  const el = document.getElementById('badge-sincronizacao');
+  if (!el) return;
+  clearTimeout(timerBadgeSincronizacao);
+
+  const estilos = {
+    pendente: { texto: '● Alterações pendentes', classe: 'bg-slate-100 text-slate-500 border-slate-200' },
+    salvando: { texto: '☁️ Salvando...', classe: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
+    salvo:    { texto: '✅ Salvo na nuvem', classe: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    erro:     { texto: '⚠️ Erro ao salvar — ' + (detalhe || 'tente novamente'), classe: 'bg-red-50 text-red-700 border-red-200' }
+  };
+  const cfg = estilos[status];
+  if (!cfg) { el.innerHTML = ''; return; }
+
+  el.innerHTML = `<div class="fixed bottom-4 right-4 z-[9999] text-[11px] font-bold px-3 py-2 rounded-xl border shadow-lg ${cfg.classe}">${cfg.texto}</div>`;
+
+  if (status === 'salvo') {
+    timerBadgeSincronizacao = setTimeout(() => { el.innerHTML = ''; }, 2500);
+  }
+}
+
+// Tenta gravar imediatamente quando a aba fica em segundo plano ou a página
+// vai ser fechada/atualizada — evita perder as últimas alterações
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') flushSincronizacaoImediata();
+});
+window.addEventListener('pagehide', flushSincronizacaoImediata);
+window.addEventListener('beforeunload', flushSincronizacaoImediata);
 
 /* Ouve mudanças feitas em outros dispositivos/navegadores na unidade aberta */
 function iniciarListenerUnidade(unidadeId) {

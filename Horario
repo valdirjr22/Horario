@@ -212,6 +212,9 @@ let formNovaSenhaPropria = "";
 let formConfirmarNovaSenhaPropria = "";
 let mostrarSenhaPropria = false;
 
+/* Estado do "primeiro acesso" (login funcionou mas ainda não existe cadastro) */
+let contaSemCadastro = null;
+
 let professorEmEdicao = null;
 let turmaEmEdicao = null;
 let cursoEmEdicao = null;
@@ -537,9 +540,11 @@ async function tentarLogin() {
     const snap = await window.fb.getDoc(window.fb.doc(window.db, 'usuarios', uid));
 
     if (!snap.exists()) {
-      erroLogin = "Sua conta não está registrada no sistema. Fale com um administrador.";
-      await window.fb.signOut(window.auth);
-      carregandoApp = false; renderizarAplicacao(); return;
+      contaSemCadastro = { uid, email };
+      carregandoApp = false;
+      loginUsuarioDigitado = ""; loginSenhaDigitada = ""; mostrarSenhaLogin = false;
+      renderizarAplicacao();
+      return;
     }
     const dadosUsuario = snap.data();
     if (dadosUsuario.ativo === false) {
@@ -568,6 +573,47 @@ async function tentarLogin() {
     erroLogin = mapaErros[e.code] || ("Erro ao entrar: " + e.message);
     renderizarAplicacao();
   }
+}
+
+/* Primeiro acesso: o login funcionou mas ainda não existe cadastro no sistema.
+   Cria a conta de administrador na hora, sem precisar mexer no Firestore. */
+async function criarPrimeiroAdmin() {
+  if (!contaSemCadastro) return;
+  if (!confirm("Isso vai criar uma conta com acesso TOTAL de Administrador para " + contaSemCadastro.email + ". Confirma?")) return;
+
+  carregandoApp = true;
+  renderizarAplicacao();
+
+  try {
+    const novoUsuario = {
+      nome: contaSemCadastro.email.split('@')[0],
+      email: contaSemCadastro.email,
+      perfil: 'Administrador',
+      ativo: true,
+      podeEditarHorarios: true,
+      unidadesVinculadas: [],
+      dataCadastro: new Date().toISOString().slice(0, 10)
+    };
+    await window.fb.setDoc(window.fb.doc(window.db, 'usuarios', contaSemCadastro.uid), novoUsuario);
+
+    usuarioLogado = { id: contaSemCadastro.uid, ...novoUsuario };
+    contaSemCadastro = null;
+    await carregarUnidadesDoFirestore();
+    definirUnidadeAposLogin();
+    telaAtual = 'Início';
+    carregandoApp = false;
+    renderizarAplicacao();
+  } catch (e) {
+    carregandoApp = false;
+    alert("Erro ao criar a conta: " + e.message);
+    renderizarAplicacao();
+  }
+}
+
+async function cancelarContaSemCadastro() {
+  contaSemCadastro = null;
+  if (window.auth) { try { await window.fb.signOut(window.auth); } catch (e) { /* ignora */ } }
+  renderizarAplicacao();
 }
 
 function tentarLoginOffline(email, senha) {
@@ -604,6 +650,28 @@ function renderizarLogin() {
       </div>
     `;
   }
+
+  if (contaSemCadastro) {
+    return `
+      <div class="flex flex-col items-center justify-center w-full min-h-screen p-6 bg-gradient-to-br from-cyan-500 to-blue-700 text-white">
+        <div class="max-w-sm w-full bg-white text-slate-800 rounded-3xl shadow-2xl p-8 space-y-5 text-center">
+          <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-inner">🚀</div>
+          <div>
+            <h1 class="text-lg font-black">Primeiro acesso</h1>
+            <p class="text-xs text-slate-500 mt-1">O login de <strong>${contaSemCadastro.email}</strong> funcionou, mas ainda não existe um cadastro para essa conta no sistema.</p>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-left text-[11px] text-amber-700">
+            ⚠️ Isso vai criar essa conta com acesso <strong>total de Administrador</strong>. Só faça isso se essa for realmente a sua primeira conta no sistema.
+          </div>
+          <div class="space-y-2">
+            <button onclick="criarPrimeiroAdmin()" class="w-full bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-bold py-3 rounded-xl text-sm shadow-md transition">🚀 Criar minha conta de Administrador</button>
+            <button onclick="cancelarContaSemCadastro()" class="w-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold py-2.5 rounded-xl text-xs transition">Cancelar e voltar</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   return `
     <div class="flex flex-col items-center justify-center w-full min-h-screen p-6 bg-gradient-to-br from-cyan-500 to-blue-700 text-white">
       <div class="max-w-sm w-full bg-white text-slate-800 rounded-3xl shadow-2xl p-8 space-y-5">
@@ -3040,7 +3108,7 @@ function renderizarAplicacao() {
 
 // Inicialização
 async function tratarMudancaDeAuth(user) {
-  if (user && !usuarioLogado) {
+  if (user && !usuarioLogado && !contaSemCadastro) {
     carregandoApp = true;
     renderizarAplicacao();
     try {
@@ -3049,6 +3117,8 @@ async function tratarMudancaDeAuth(user) {
         usuarioLogado = { id: user.uid, ...snap.data() };
         await carregarUnidadesDoFirestore();
         definirUnidadeAposLogin();
+      } else if (!snap.exists()) {
+        contaSemCadastro = { uid: user.uid, email: user.email };
       } else {
         await window.fb.signOut(window.auth);
       }

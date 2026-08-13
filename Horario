@@ -379,10 +379,13 @@ function estruturaVaziaUnidade() {
 
 /* Carrega (ou, na primeira vez, semeia) as unidades e seus dados no Firestore */
 async function carregarUnidadesDoFirestore() {
-  const snapUnidades = await window.fb.getDocs(window.fb.collection(window.db, 'unidades'));
+  const ehAdmin = usuarioLogado.perfil === 'Administrador';
 
-  if (snapUnidades.empty) {
-    if (usuarioLogado.perfil === 'Administrador') {
+  if (ehAdmin) {
+    // Admin pode listar a coleção inteira
+    const snapUnidades = await window.fb.getDocs(window.fb.collection(window.db, 'unidades'));
+
+    if (snapUnidades.empty) {
       for (const u of unidades) {
         await window.fb.setDoc(window.fb.doc(window.db, 'unidades', u.id), {
           nome: u.nome, tipo: u.tipo, icone: u.icone, cidade: u.cidade,
@@ -390,24 +393,46 @@ async function carregarUnidadesDoFirestore() {
           dados: dadosPorUnidade[u.id] || estruturaVaziaUnidade()
         });
       }
+    } else {
+      const novasUnidades = [];
+      const novoDadosPorUnidade = {};
+      snapUnidades.forEach(docSnap => {
+        const d = docSnap.data();
+        novasUnidades.push({
+          id: docSnap.id, nome: d.nome, tipo: d.tipo, icone: d.icone, cidade: d.cidade,
+          endereco: d.endereco || '', aulasPorTurno: d.aulasPorTurno || 7, nota: d.nota || '', cor: d.cor || 'cyan'
+        });
+        novoDadosPorUnidade[docSnap.id] = d.dados || estruturaVaziaUnidade();
+      });
+      unidades = novasUnidades;
+      dadosPorUnidade = novoDadosPorUnidade;
     }
-    // Se não é admin e não há nada no Firestore ainda, segue com a lista local vazia mesmo
   } else {
+    // Usuário comum não pode listar a coleção inteira — busca só as unidades
+    // que ele tem vínculo, uma de cada vez
+    const idsVinculados = usuarioLogado.unidadesVinculadas || [];
     const novasUnidades = [];
     const novoDadosPorUnidade = {};
-    snapUnidades.forEach(docSnap => {
-      const d = docSnap.data();
-      novasUnidades.push({
-        id: docSnap.id, nome: d.nome, tipo: d.tipo, icone: d.icone, cidade: d.cidade,
-        endereco: d.endereco || '', aulasPorTurno: d.aulasPorTurno || 7, nota: d.nota || '', cor: d.cor || 'cyan'
-      });
-      novoDadosPorUnidade[docSnap.id] = d.dados || estruturaVaziaUnidade();
-    });
+    for (const unidadeId of idsVinculados) {
+      try {
+        const snap = await window.fb.getDoc(window.fb.doc(window.db, 'unidades', unidadeId));
+        if (snap.exists()) {
+          const d = snap.data();
+          novasUnidades.push({
+            id: unidadeId, nome: d.nome, tipo: d.tipo, icone: d.icone, cidade: d.cidade,
+            endereco: d.endereco || '', aulasPorTurno: d.aulasPorTurno || 7, nota: d.nota || '', cor: d.cor || 'cyan'
+          });
+          novoDadosPorUnidade[unidadeId] = d.dados || estruturaVaziaUnidade();
+        }
+      } catch (e) {
+        console.warn('Não foi possível carregar a unidade', unidadeId, e);
+      }
+    }
     unidades = novasUnidades;
     dadosPorUnidade = novoDadosPorUnidade;
   }
 
-  if (usuarioLogado.perfil === 'Administrador') {
+  if (ehAdmin) {
     try {
       const snapUsuarios = await window.fb.getDocs(window.fb.collection(window.db, 'usuarios'));
       const lista = [];

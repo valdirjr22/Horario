@@ -1237,7 +1237,7 @@ function renderProfessores() {
   const chave = getChaveProf();
   inicializarDisponibilidadesSeNecessario(chave);
 
-  const listaFiltrada = d.professores.filter(p => p.nome.toLowerCase().includes(filtroBuscaProfessor.toLowerCase()));
+  const listaFiltrada = d.professores.filter(p => (p.nome || '').toLowerCase().includes(filtroBuscaProfessor.toLowerCase()));
 
   const blocosTurnos = ["Manhã", "Tarde"].map(turno => {
     const iconeTurno = turno === 'Manhã' ? '☀️' : '🌙';
@@ -1406,7 +1406,7 @@ function removerTurma(id) {
 
 function renderTurmas() {
   const d = dados();
-  const listaFiltrada = d.turmas.filter(t => t.nome.toLowerCase().includes(filtroBuscaTurma.toLowerCase()));
+  const listaFiltrada = d.turmas.filter(t => (t.nome || '').toLowerCase().includes(filtroBuscaTurma.toLowerCase()));
 
   const listaCards = listaFiltrada.map(t => `
     <div class="bg-orange-50/40 rounded-2xl border-2 border-orange-200 p-4 flex items-center justify-between shadow-sm flex-wrap gap-3">
@@ -1531,7 +1531,7 @@ function renderCursos() {
   const d = dados();
   const nomeVal = cursoEmEdicao ? cursoEmEdicao.nome : '';
   const descVal = cursoEmEdicao ? cursoEmEdicao.descricao : '';
-  const listaFiltrada = d.cursos.filter(c => c.nome.toLowerCase().includes(filtroBuscaCurso.toLowerCase()));
+  const listaFiltrada = d.cursos.filter(c => (c.nome || '').toLowerCase().includes(filtroBuscaCurso.toLowerCase()));
 
   const listaCards = listaFiltrada.map(c => `
     <div class="bg-cyan-50/45 rounded-2xl border-2 border-cyan-200 p-4 flex items-start justify-between shadow-sm gap-3">
@@ -1639,7 +1639,7 @@ function removerDisciplina(id) {
 function renderDisciplinas() {
   const d = dados();
   const disciplinasFiltradas = d.disciplinas.filter(disc => {
-    const matchBusca = disc.nome.toLowerCase().includes(filtroBuscaDisciplina.toLowerCase());
+    const matchBusca = (disc.nome || '').toLowerCase().includes(filtroBuscaDisciplina.toLowerCase());
     const matchTurma = filtroTurmaDisciplina === "Todas" || disc.turma === filtroTurmaDisciplina;
     const matchProf = filtroProfDisciplina === "Todos" || disc.professor === filtroProfDisciplina;
     return matchBusca && matchTurma && matchProf;
@@ -1756,7 +1756,7 @@ function renderDisciplinas() {
 function renderDisciplinasCadastradas() {
   const d = dados();
   const disciplinasFiltradas = d.disciplinas.filter(disc => {
-    const matchBusca = disc.nome.toLowerCase().includes(filtroBuscaCadastradas.toLowerCase());
+    const matchBusca = (disc.nome || '').toLowerCase().includes(filtroBuscaCadastradas.toLowerCase());
     const matchTurma = filtroTurmaCadastradas === "Todas" || disc.turma === filtroTurmaCadastradas;
     const matchProf = filtroProfCadastradas === "Todos" || disc.professor === filtroProfCadastradas;
     return matchBusca && matchTurma && matchProf;
@@ -2876,14 +2876,17 @@ function renderUsuarios() {
 
   const usuariosFiltrados = usuariosGlobais.filter(u => {
     const termo = filtroBuscaUsuario.toLowerCase();
-    const matchBusca = u.nome.toLowerCase().includes(termo) || u.email.toLowerCase().includes(termo);
+    const nome = u.nome || '';
+    const email = u.email || '';
+    const matchBusca = nome.toLowerCase().includes(termo) || email.toLowerCase().includes(termo);
     const matchPerfil = filtroPerfilUsuario === "Todas" || u.perfil === filtroPerfilUsuario;
     return matchBusca && matchPerfil;
   });
 
   const linhasUsuarios = usuariosFiltrados.map(u => {
-    const inicial = u.nome.trim().charAt(0).toUpperCase();
-    const corBg = corAvatar(u.nome);
+    const nomeExibicao = u.nome || u.email || '(sem nome)';
+    const inicial = nomeExibicao.trim().charAt(0).toUpperCase() || '?';
+    const corBg = corAvatar(nomeExibicao);
     const badge = u.perfil === 'Administrador'
       ? `<span class="bg-cyan-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 w-fit">○ Admin</span>`
       : `<span class="border border-orange-300 text-orange-600 bg-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 w-fit">👤 Usuário</span>`;
@@ -2892,11 +2895,11 @@ function renderUsuarios() {
       <div class="grid grid-cols-[2.2fr,2.2fr,1fr,1.1fr,0.9fr] items-center gap-3 py-3.5 border-b border-slate-100 last:border-0">
         <div class="flex items-center gap-2.5 min-w-0">
           <span class="w-8 h-8 rounded-full ${corBg} text-white text-xs font-bold flex items-center justify-center flex-shrink-0">${inicial}</span>
-          <span class="font-bold text-slate-800 text-sm truncate">${u.nome}</span>
+          <span class="font-bold text-slate-800 text-sm truncate">${nomeExibicao}</span>
         </div>
         <div class="flex items-center gap-1.5 text-xs text-slate-500 min-w-0">
           <div class="min-w-0">
-            <p class="flex items-center gap-1.5 truncate"><span>✉️</span><span class="truncate">${u.email}</span></p>
+            <p class="flex items-center gap-1.5 truncate"><span>✉️</span><span class="truncate">${u.email || '—'}</span></p>
             ${u.usuarioLogin ? `<p class="text-[10px] text-slate-400 truncate mt-0.5">🔑 ${u.usuarioLogin}</p>` : ''}
           </div>
         </div>
